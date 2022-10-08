@@ -1,5 +1,5 @@
 import pygame, sys
-from particlelist import ParticleList
+from engine.graphic.particlelist import ParticleList
 
 FPS = 60
 

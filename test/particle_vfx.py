@@ -1,5 +1,5 @@
 import pygame, sys, random
-from particle import SplashVFX
+from engine.graphic.particle import SplashVFX
 
 clock = pygame.time.Clock()
 pygame.init()

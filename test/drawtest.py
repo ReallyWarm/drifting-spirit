@@ -18,6 +18,13 @@ while True:
     mx, my = pygame.mouse.get_pos()
     loc = [mx, my]
 
+    # points = [
+    # [self.loc[0] + math.cos(self.angle) * self.speed * self.scale, self.loc[1] + math.sin(self.angle) * self.speed * self.scale],
+    # [self.loc[0] + math.cos(self.angle + math.pi / 2) * self.speed * self.scale * 0.3, self.loc[1] + math.sin(self.angle + math.pi / 2) * self.speed * self.scale * 0.3],
+    # [self.loc[0] - math.cos(self.angle) * self.speed * self.scale * 3.5, self.loc[1] - math.sin(self.angle) * self.speed * self.scale * 3.5],
+    # [self.loc[0] + math.cos(self.angle - math.pi / 2) * self.speed * self.scale * 0.3, self.loc[1] - math.sin(self.angle + math.pi / 2) * self.speed * self.scale * 0.3],
+    # ]
+
     points = [
     [loc[0] , loc[1]],
     [loc[0] - spd * scl * math.cos(ang + math.pi/6) *0.6, loc[1] - spd * scl * math.sin(ang + math.pi/6) *0.6],
