@@ -1,4 +1,6 @@
-import pygame, sys, random
+import pygame, sys, os, random
+MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(MAIN_DIR))
 from engine.graphic.particle import SplashVFX
 
 clock = pygame.time.Clock()

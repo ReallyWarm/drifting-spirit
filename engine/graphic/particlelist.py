@@ -1,5 +1,5 @@
 import pygame, random
-from particle import SplashVFX, DustVFX
+from .particle import SplashVFX, DustVFX
 
 class ParticleList():
     def __init__(self):
