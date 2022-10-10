@@ -25,7 +25,10 @@ class SplashVFX():
         
         if self.gravity:
             moveY += min(forceY * dt, self.maxspd * dt)
-            moveX += 0 if moveY >= 0 else (forceX * dt) if moveX >= 0 else -(forceX * dt)
+            if forceY >= 0:
+                moveX += 0 if moveY >= 0 else (forceX * dt) if moveX >= 0 else -(forceX * dt)
+            if forceY < 0:
+                moveX -= 0 if moveY <= 0 else (forceX * dt) if moveX >= 0 else -(forceX * dt)
         else:
             moveY += forceY * dt
             moveX += forceX * dt
@@ -37,7 +40,7 @@ class SplashVFX():
         self.loc[0] += self.movement[0]
         self.loc[1] += self.movement[1]
 
-        self.spd -= self.fric
+        self.spd -= self.fric * dt
         if self.force:
             self.calculate_force(self.force[0], self.force[1], dt)
 
@@ -80,5 +83,5 @@ class SplashVFX():
                 pygame.draw.polygon(surf, self.color, points)
 
 class DustVFX():
-    def __init__(self, a):
-        self.a = a
+    def __init__(self):
+        pass
