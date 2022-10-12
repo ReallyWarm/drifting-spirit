@@ -18,11 +18,12 @@ class GameWindow():
             pygame.display.set_caption(f'Drifting Spirit [{round(self.clock.get_fps())}]')
             dt = 60/1000 * delta
 
-            for event in pygame.event.get():
+            event_list = pygame.event.get()
+            for event in event_list:
                 if event.type == pygame.QUIT:
                     self.gameMenu.run = False
 
-            self.gameMenu.run_menu(dt)
+            self.gameMenu.run_menu(event_list, dt)
 
             pygame.display.flip()
             delta = self.clock.tick(FPS)

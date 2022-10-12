@@ -1,106 +1,112 @@
 import pygame
 from engine.game import Game
+from engine.graphic.button import Button
 
 class Menu():
-    def __init__(self):    
-        self.crnMenu = [self.main_menu, self.game_loop, self.rank_menu, self.option_menu]
-        self.Id = 0
+    def __init__(self, scr_id=1):
+        self.scr_option = [(1440,960),(1200,800),(960,640),(720,480)] # 3:2
+        self.scr_id = scr_id
 
-        self.scrOption = [(1200,960),(1080,840),(960,720), (840,600)]
-        self.scrId = 2
+        self.scr_size = self.scr_option[self.scr_id]
+        self.scr_default = self.scr_size
+        self.screen = pygame.display.set_mode(self.scr_size, 0, 32)
+        self.scale = (1,1)
 
-        self.scrSize = self.scrOption[self.scrId]
-        self.screen = pygame.display.set_mode(self.scrSize, 0, 32)
+        self.current_menu = [self.main_menu, self.game_loop, self.rank_menu, self.option_menu]
+        self.id = 0
 
-        self.game = Game()
-        self.mouseDown = False
+        self.main_menu_button = pygame.sprite.Group()
+        self.option_menu_button = pygame.sprite.Group()
+        self.back_button = None
+        self.set_button()
+
+        self.game = Game((256,320))
+        self.mouse_down = False
         self.run = True
 
-    def run_menu(self, dt):
-        self.crnMenu[self.Id](dt)
+    def set_button(self):
+        sw, sh = self.scale
+        self.fontM = pygame.font.SysFont(None, int(30*sh))
+        self.fontOp = pygame.font.SysFont(None, int(25*sh))
 
-    def get_mouse_down(self, index): 
-        if pygame.mouse.get_pressed()[index]:
-            if not self.mouseDown:
-                self.mouseDown = True
-                return True
-            else:
-                return False
-        self.mouseDown = False
-        return False
+        self.back_button = Button(self.scr_size[0] - 80*sw, 30*sh, 50*sw, 50*sh, (200,155,155), self.fontM, '->')
 
-    def main_menu(self, _):
-        playB = pygame.Rect(80,self.scrSize[1]-370,200,45)
-        rankB = pygame.Rect(80,self.scrSize[1]-290,150,45)
-        optionB = pygame.Rect(80,self.scrSize[1]-210,100,45)
-        exitB = pygame.Rect(80,self.scrSize[1]-130,70,45)
+        self.main_menu_button.empty()
+        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 370*sh, 200*sw, 45*sh, (40,50,150), self.fontM, 'Play'))
+        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 290*sh, 200*sw, 45*sh, (40,50,150), self.fontM, 'Ranking'))
+        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 210*sh, 200*sw, 45*sh, (40,50,150), self.fontM, 'Options'))
+        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 130*sh, 200*sw, 45*sh, (40,50,150), self.fontM, 'Exit'))
 
-        mx, my = pygame.mouse.get_pos()
-        if self.get_mouse_down(0):
-            if playB.collidepoint(mx, my):
-                self.Id = 1
-            elif rankB.collidepoint(mx, my):
-                self.Id = 2
-            elif optionB.collidepoint(mx, my):
-                self.Id = 3
-            elif exitB.collidepoint(mx, my):
-                self.run = False
+        self.option_menu_button.empty()
+        self.option_menu_button.add(Button(80*sw, 150*sh, 100*sw, 50*sh, (40,50,150), self.fontOp, f'{self.scr_option[0][0]}x{self.scr_option[0][1]}'))
+        self.option_menu_button.add(Button(80*sw, 230*sh, 100*sw, 50*sh, (40,50,150), self.fontOp, f'{self.scr_option[1][0]}x{self.scr_option[1][1]}'))
+        self.option_menu_button.add(Button(80*sw, 310*sh, 100*sw, 50*sh, (40,50,150), self.fontOp, f'{self.scr_option[2][0]}x{self.scr_option[2][1]}'))
+        self.option_menu_button.add(Button(80*sw, 390*sh, 100*sw, 50*sh, (40,50,150), self.fontOp, f'{self.scr_option[3][0]}x{self.scr_option[3][1]}'))
+
+    def run_menu(self, event_list, dt):
+        self.current_menu[self.id](event_list, dt)
+
+    def main_menu(self, event_list, _):
+        self.main_menu_button.update(event_list)
+
+        for i, button in enumerate(self.main_menu_button.sprites()):
+            if button.get_clicked():
+                if i == 3:
+                    self.run = False
+                elif i == 1:
+                    self.id = 2
+                elif i == 2:
+                    self.id = 3
+                elif i == 0:
+                    self.id = 1
             
         self.screen.fill((200,220,255))
-        pygame.draw.rect(self.screen, (200,155,155), playB)
-        pygame.draw.rect(self.screen, (200,155,155), rankB)
-        pygame.draw.rect(self.screen, (200,155,155), optionB)
-        pygame.draw.rect(self.screen, (200,155,155), exitB)
+        self.main_menu_button.draw(self.screen)
 
-    def game_loop(self, dt):
-        backB = pygame.Rect(self.scrSize[0]-80,30,50,50)
+    def game_loop(self, event_list, dt):
+        self.back_button.update(event_list)
 
         if pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            self.Id = 0
-        mx, my = pygame.mouse.get_pos()
-        if self.get_mouse_down(0):
-            if backB.collidepoint(mx, my):
-                self.Id = 0
+            self.id = 0
+        if self.back_button.get_clicked():
+            self.id = 0
 
-        self.game.update(dt)
+        self.game.update(event_list, dt)
             
         self.screen.fill((30,30,30))
-        pygame.draw.rect(self.screen, (200,155,155), backB)
         self.game.draw()
+        self.back_button.draw(self.screen)
 
-    def rank_menu(self, _):
-        backB = pygame.Rect(self.scrSize[0]-80,30,50,50)
-        boardB = pygame.Rect((self.scrSize[0]-640)/2,(self.scrSize[1]-510)/2,640,510)
+    def rank_menu(self, event_list, _):
+        sw, sh = self.scale
+        self.back_button.update(event_list)
+        boardB = pygame.Rect((self.scr_size[0]-760*sw)/2,(self.scr_size[1]-600*sh)/2,760*sw,600*sh)
 
-        mx, my = pygame.mouse.get_pos()
-        if self.get_mouse_down(0):
-            if backB.collidepoint(mx, my):
-                self.Id = 0
+        if self.back_button.get_clicked():
+            self.id = 0
             
         self.screen.fill((200,220,255))
-        pygame.draw.rect(self.screen, (200,155,155), backB)
+        self.back_button.draw(self.screen)
         pygame.draw.rect(self.screen, (200,155,155), boardB)
 
-    def option_menu(self, _):
-        backB = pygame.Rect(self.scrSize[0]-80,30,50,50)
-        resB = []
-        for i in range(4):
-            resB.append(pygame.Rect(80,(i*80)+150, 100,50))
+    def option_menu(self, event_list, _):
+        self.back_button.update(event_list)
+        self.option_menu_button.update(event_list)
 
         if pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            self.Id = 0
-        mx, my = pygame.mouse.get_pos()
-        if self.get_mouse_down(0):
-            if backB.collidepoint(mx, my):
-                self.Id = 0
-            for i, button in enumerate(resB):
-                if button.collidepoint(mx, my):
-                    self.scrId = i
-                    self.scrSize = self.scrOption[self.scrId]
-                    self.screen = pygame.display.set_mode(self.scrSize, 0, 32)
-                    self.game.update_canva()
+            self.id = 0
+        if self.back_button.get_clicked():
+            self.id = 0
+
+        for i, button in enumerate(self.option_menu_button.sprites()):
+            if button.get_clicked():
+                self.scr_id = i
+                self.scr_size = self.scr_option[self.scr_id]
+                self.scale = (self.scr_size[0] / self.scr_default[0], self.scr_size[1] / self.scr_default[1])
+                self.screen = pygame.display.set_mode(self.scr_size, 0, 32)
+                self.set_button()
+                self.game.update_canva()
   
         self.screen.fill((100,220,155))
-        pygame.draw.rect(self.screen, (200,155,155), backB)
-        for button in resB:
-            pygame.draw.rect(self.screen, (200,155,155), button)
+        self.back_button.draw(self.screen)
+        self.option_menu_button.draw(self.screen)
