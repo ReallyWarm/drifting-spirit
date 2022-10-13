@@ -20,8 +20,7 @@ class Menu():
         self.back_button = None
         self.set_button()
 
-        self.game = Game((256,320))
-        self.mouse_down = False
+        self.new_game = True
         self.run = True
 
     def set_button(self):
@@ -44,6 +43,10 @@ class Menu():
         self.option_menu_button.add(Button(80*sw, 390*sh, 100*sw, 50*sh, (40,50,150), self.fontOp, f'{self.scr_option[3][0]}x{self.scr_option[3][1]}'))
 
     def run_menu(self, event_list, dt):
+        if self.id == 1 and self.new_game:
+            self.game = Game((256,320))
+            self.new_game = False
+
         self.current_menu[self.id](event_list, dt)
 
     def main_menu(self, event_list, _):
@@ -53,12 +56,12 @@ class Menu():
             if button.get_clicked():
                 if i == 3:
                     self.run = False
+                elif i == 0:
+                    self.id = 1
                 elif i == 1:
                     self.id = 2
                 elif i == 2:
                     self.id = 3
-                elif i == 0:
-                    self.id = 1
             
         self.screen.fill((200,220,255))
         self.main_menu_button.draw(self.screen)
@@ -66,10 +69,9 @@ class Menu():
     def game_loop(self, event_list, dt):
         self.back_button.update(event_list)
 
-        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+        if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked():
             self.id = 0
-        if self.back_button.get_clicked():
-            self.id = 0
+            self.new_game = True
 
         self.game.update(event_list, dt)
             
@@ -82,7 +84,7 @@ class Menu():
         self.back_button.update(event_list)
         boardB = pygame.Rect((self.scr_size[0]-760*sw)/2,(self.scr_size[1]-600*sh)/2,760*sw,600*sh)
 
-        if self.back_button.get_clicked():
+        if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked():
             self.id = 0
             
         self.screen.fill((200,220,255))
@@ -93,9 +95,7 @@ class Menu():
         self.back_button.update(event_list)
         self.option_menu_button.update(event_list)
 
-        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            self.id = 0
-        if self.back_button.get_clicked():
+        if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked():
             self.id = 0
 
         for i, button in enumerate(self.option_menu_button.sprites()):
