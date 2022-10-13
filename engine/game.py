@@ -1,6 +1,7 @@
 import pygame, sys
 from engine.graphic.particlelist import ParticleList
 from engine.player import Player
+from engine.platform import Platform
 
 class Game():
     def __init__(self, canvaSize):
@@ -9,7 +10,9 @@ class Game():
         self.scale = (1,1)
         self.update_canva()
 
-        self.player = Player()
+        self.all_sprites = pygame.sprite.Group()
+        self.init_level()
+
         self.particles = ParticleList()
         self.particles.new_type('flame0',1,[1,(1,2),(250,290), 4, 0.05,(-1,-0.1),(255,120, 60), (55,25,15), True])
         self.particles.new_type('candle',1,[1,(1,2),(250,290), 4, 0.2, (0,-15),(204,255,255), (0,20,20), False], 0)
@@ -17,10 +20,14 @@ class Game():
         self.particles.new_type('dusts0',1,[1,(2,3),(180,360), 4, 0.1 ,(0.1,0.1),(255,255,255), False, True])
         self.ptc_id = 'flame0'
 
-        self.all_sprites = pygame.sprite.Group()
-        self.all_sprites.add(self.player)
-
         self.dt = 1
+
+    def init_level(self):
+        self.all_sprites.empty()
+        self.player = Player()
+        self.all_sprites.add(self.player)
+        self.plt = Platform()
+        self.all_sprites.add(self.plt)
 
     def update_canva(self):
         self.screen = pygame.display.get_surface()
@@ -50,24 +57,22 @@ class Game():
             if pygame.mouse.get_pressed()[0]:
                 for i in range(1):
                     self.particles.add(self.ptc_id, [(mx-self.cva_rect.x)*self.scale[0], (my-self.cva_rect.y)*self.scale[1]], self.dt)
-            if pygame.mouse.get_pressed()[2]:
-                self.player.aniType = 'idle'
 
     def update(self, event_list, dt):
         self.dt = dt
         self.input(event_list)
+        self.player.input(event_list)
         self.particles.update(self.dt)
         self.all_sprites.update(self.dt)
 
     def draw(self):
-        rect1 = pygame.Rect(self.canva.get_width()-50,50,50,50)
-
         self.canva.fill((0,0,100))
-        pygame.draw.rect(self.canva, (100,0,0), rect1)
+
         self.particles.draw(self.canva)
         for i in range(8):
             pygame.draw.rect(self.canva, (200,155,155),pygame.Rect(32*i,100,32,32+i*10))
 
         self.all_sprites.draw(self.canva)
+        self.player.vfx.draw(self.canva)
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
