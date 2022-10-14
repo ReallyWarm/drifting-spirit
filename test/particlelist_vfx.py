@@ -10,7 +10,7 @@ pygame.display.set_caption('particlelist')
 screen = pygame.display.set_mode((500, 500), 0, 32)
 font = pygame.font.SysFont('Calibri',20)
 
-particles = ParticleList()
+particles = ParticleList(screen.get_size())
 particles.new_type('ptw',1,[1,(2,5),(180,360), 5, 0.1 ,(0  ,0.2),(255,255,255), False, False])
 particles.new_type('pte',1,[1,(3,7),(  0,360), 8, 0.1 ,(0.1,0.3),(255,155,155), False, True])
 particles.new_type('ptr',1,[1,(4,6),(  0,360), 4, 0.1 ,     None,(155,255,155), (50,50,50), False])
@@ -36,12 +36,13 @@ while True:
 
     particles.update(dt)
     particles.draw(screen)
+    print(particles.particles)
 
     mx, my = pygame.mouse.get_pos()
 
     ptc = typed[index]
     for i in range(particleTime):
-        particles.add(ptc, [mx, my])
+        particles.add(ptc, [mx, my], dt, fric=0)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

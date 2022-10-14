@@ -2,11 +2,12 @@ import pygame, random
 from .particle import SplashVFX, DustVFX
 
 class ParticleList():
-    def __init__(self):
+    def __init__(self, screen_size):
         self.particle_data = dict()
         self.particle_type = dict()
         self.time = dict()
         self.particles = list()
+        self.screen_size = screen_size
 
     def new_type(self, name, type, data, time=1):
         self.particle_data[name] = data
@@ -16,8 +17,12 @@ class ParticleList():
     def get_name(self):
         return [key for key in self.particle_type]
     
-    def add(self, name, location, dt):
+    def add(self, name, location, dt, angle:list=None, fric=None):
         tmp = self.particle_data[name]
+        if angle is not None:
+            tmp[2] = angle
+        if fric is not None:
+            tmp[4] = fric
         thistype = self.particle_type[name]
         self.time[name][0] += 1
         if self.time[name][0] >= self.time[name][1] / dt:
@@ -34,7 +39,10 @@ class ParticleList():
             particle.update(dt)
             if not particle.alive:
                 self.particles.pop(i)
-
+            elif particle.loc[0] > self.screen_size[0] + particle.spd * particle.scl * 4 or particle.loc[0] < -particle.spd * particle.scl * 4:
+                self.particles.pop(i)
+            elif particle.loc[1] > self.screen_size[1] + particle.spd * particle.scl * 4 or particle.loc[1] < -particle.spd * particle.scl * 4:
+                self.particles.pop(i)
     def draw(self, surf):
         for particle in self.particles:
             particle.draw(surf)
