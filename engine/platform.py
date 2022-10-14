@@ -1,9 +1,21 @@
 import pygame
+from engine.graphic.spritesheet import sprite_at
+
+class PlatformSet():
+    def __init__(self):
+        self.data = {}
+
+    def add(self, name, image_list):
+        block = len(image_list)
+        w, h = image_list[0].get_size()
+        surf = pygame.Surface((w*block, h), pygame.SRCALPHA)
+        for i, image in enumerate(image_list):
+            surf.blit(image, (w*i,0))
+        self.data[name] = surf
 
 class Platform(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, pos, image):
         super().__init__()
-        self.image = pygame.Surface((100, 20))
-        self.image.fill((255,0,0))
-        self.rect = self.image.get_rect(center = (100, 100))
+        self.image = image
+        self.rect = self.image.get_rect(topleft = pos)
  

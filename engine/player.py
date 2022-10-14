@@ -1,9 +1,10 @@
-import pygame
+import pygame, math
+from pygame.math import Vector2
 from engine.graphic.animate import Animate
 from engine.graphic.particlelist import ParticleList
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, canva_size):
         super().__init__()
         self.ani = {'run' : Animate("sprite/player-run.png", (0,0,24,32), 8, pixel_jump=2, frames=3),
                     'idle': Animate("sprite/player-idle.png",(0,0,24,32), 4, pixel_jump=2, frames=45),
@@ -12,7 +13,7 @@ class Player(pygame.sprite.Sprite):
         self.image = self.ani['idle'].image
         self.rect = self.image.get_rect(midbottom = (100,50))
 
-        self.vfx = ParticleList()
+        self.vfx = ParticleList(canva_size)
         self.vfx.new_type('candle',1,[1,(1,2),(245,295), 5, 0.2, (0,-1.5),(204,255,255), (0,20,20), False], 0)
 
         self.state = 'idel'
@@ -21,10 +22,8 @@ class Player(pygame.sprite.Sprite):
         self.moveR = False
         self.jumped = False
         
-        self.direction = pygame.Vector2(0,0)
-        self.pos = pygame.Vector2(self.rect.midbottom)
-        self.vel = pygame.Vector2(0,0)
-        self.acc = pygame.Vector2(0,0)
+        self.vel = Vector2(0,0)
+        self.acc = Vector2(0,0)
 
     def input(self, event_list):
         for event in event_list:
@@ -43,9 +42,7 @@ class Player(pygame.sprite.Sprite):
                     self.moveR = False
 
     def update(self, dt):
-        self.move(dt)
-
-        if self.vel.y > 0:
+        if self.vel.y > 1:
             self.state = 'fall'
         elif self.vel.y < 0:
             self.state = 'jump'
@@ -66,49 +63,83 @@ class Player(pygame.sprite.Sprite):
         self.vfx.add('candle', [mid_x, top_y], dt)
         self.vfx.update(dt)
 
-    def move(self, dt):
+    def move(self, collision_block, collision_platform, dt):
         # Max speed = acc / fric
-        acc = 0.6
+        acc = 0.64
         fric = -0.2
         max_y = 6.5
-        self.acc = pygame.Vector2(0,0.2*dt)
+        self.acc = Vector2(0,0.2*dt)
+        movement = Vector2(0,0)
 
         # Direction
         if self.moveR and self.moveL:
-            self.direction.x = 0
+            direction_x = 0
         elif self.moveR:
             self.face_right = True
-            self.direction.x = 1
+            direction_x = 1
         elif self.moveL:
             self.face_right = False
-            self.direction.x = -1
+            direction_x = -1
         else:
-            self.direction.x = 0
+            direction_x = 0
 
         if self.jumped:
             self.vel.y = -5.5 * dt
             self.jumped = False
 
         # Running
-        self.acc.x = self.direction.x * acc * dt
+        self.acc.x = direction_x * acc * dt
         self.acc.x += self.vel.x * fric
         self.vel += self.acc * dt
-        self.vel.y = max_y * dt if self.vel.y > max_y * dt else self.vel.y
-        self.pos += (self.vel + 0.5 * self.acc)
+        self.vel.y = (max_y * dt) if (self.vel.y > max_y * dt) else (self.vel.y)
+        movement = self.vel + (0.5 * self.acc)
 
         # Stopping
         if self.vel.x < 0.2 * dt and self.vel.x > -0.2 * dt:
             self.vel.x = 0
 
+        # Update position
+        self.rect.midbottom = self.collision(collision_block, collision_platform, movement)
+
+    def collision(self, collision_block, collision_platform, movement):
+        new_rect = self.rect.copy()
+
+        if movement.x < 0:
+            movement.x = math.ceil(movement.x)
+
+        new_rect.x += movement.x
+        # collide block X
+        for block in collision_block:
+            if block.rect.colliderect(new_rect):
+                if self.vel.x > 0:
+                    new_rect.right = block.rect.left
+                elif self.vel.x < 0:
+                    new_rect.left = block.rect.right
+
+        new_rect.y += movement.y
+        # collide platform
+        for platform in collision_platform:
+            if platform.rect.colliderect(new_rect):
+                if self.vel.y > 0:
+                    if abs(new_rect.bottom - platform.rect.top) <= platform.rect.height//3:
+                        new_rect.bottom = platform.rect.top
+                        self.vel.y = 0
+        # collide block Y
+        for block in collision_block:
+            if block.rect.colliderect(new_rect):
+                if self.vel.y > 0:
+                    new_rect.bottom = block.rect.top
+                elif self.vel.y < 0:
+                    new_rect.top = block.rect.bottom
+                self.vel.y = 0
+
         # Collide map
-        offset_p = self.rect.width//2
-        if self.pos.x + offset_p > 256:
-            self.pos.x = 256 - offset_p
-        elif self.pos.x - offset_p < 0:
-            self.pos.x = offset_p
-        if self.pos.y > 320:
-            self.pos.y = 320
+        if new_rect.right > 256:
+            new_rect.right = 256
+        elif new_rect.left < 0:
+            new_rect.left = 0
+        if new_rect.bottom > 320:
+            new_rect.bottom = 320
             self.vel.y = 0
 
-        # Update position
-        self.rect.midbottom = self.pos
+        return new_rect.midbottom

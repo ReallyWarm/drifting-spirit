@@ -1,33 +1,47 @@
+from platform import platform
 import pygame, sys
+from engine.graphic.spritesheet import load_sheet
 from engine.graphic.particlelist import ParticleList
+from engine.platform import PlatformSet, Platform
 from engine.player import Player
-from engine.platform import Platform
 
 class Game():
-    def __init__(self, canvaSize):
-        self.canva = pygame.Surface(canvaSize) # 3:2
+    def __init__(self, canva_size):
+        self.canva = pygame.Surface(canva_size) # 3:2
         self.cva_rect = self.canva.get_rect()
         self.scale = (1,1)
         self.update_canva()
 
-        self.all_sprites = pygame.sprite.Group()
-        self.init_level()
+        plat_image = list()
+        plat_image.extend(load_sheet("sprite/platform.png", (0,0,32,16), 4))
+        plat_image.extend(load_sheet("sprite/platform.png", (0,16,32,16), 4))
+        self.plat_data = PlatformSet()
+        self.plat_data.add('n1b', [plat_image[3]])
+        self.plat_data.add('n2b', [plat_image[0],plat_image[2]])
+        self.plat_data.add('n3b', [plat_image[0],plat_image[1],plat_image[2]])
 
-        self.particles = ParticleList()
+        self.particles = ParticleList(canva_size)
         self.particles.new_type('flame0',1,[1,(1,2),(250,290), 4, 0.05,(-1,-0.1),(255,120, 60), (55,25,15), True])
         self.particles.new_type('candle',1,[1,(1,2),(250,290), 4, 0.2, (0,-15),(204,255,255), (0,20,20), False], 0)
         self.particles.new_type('spark0',1,[2,(3,4),(  0,360), 2, 0.05,     None,(200,200,100), False, False])
         self.particles.new_type('dusts0',1,[1,(2,3),(180,360), 4, 0.1 ,(0.1,0.1),(255,255,255), False, True])
         self.ptc_id = 'flame0'
 
+        self.all_sprites = pygame.sprite.Group()
+        self.plat_sprites = pygame.sprite.Group()
+
         self.dt = 1
 
     def init_level(self):
         self.all_sprites.empty()
-        self.player = Player()
+
+        self.player = Player(self.canva.get_size())
         self.all_sprites.add(self.player)
-        self.plt = Platform()
-        self.all_sprites.add(self.plt)
+
+        for i in range (4):
+            plat = Platform((100,50+80*i), self.plat_data.data['n3b'])
+            self.all_sprites.add(plat)
+            self.plat_sprites.add(plat)
 
     def update_canva(self):
         self.screen = pygame.display.get_surface()
@@ -62,6 +76,7 @@ class Game():
         self.dt = dt
         self.input(event_list)
         self.player.input(event_list)
+        self.player.move([],self.plat_sprites.sprites(), dt)
         self.particles.update(self.dt)
         self.all_sprites.update(self.dt)
 
