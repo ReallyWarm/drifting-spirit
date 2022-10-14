@@ -20,6 +20,7 @@ class Menu():
         self.back_button = None
         self.set_button()
 
+        self.game = Game((256,320))
         self.new_game = True
         self.run = True
 
@@ -44,7 +45,7 @@ class Menu():
 
     def run_menu(self, event_list, dt):
         if self.id == 1 and self.new_game:
-            self.game = Game((256,320))
+            self.game.init_level()
             self.new_game = False
 
         self.current_menu[self.id](event_list, dt)
