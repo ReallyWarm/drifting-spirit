@@ -20,27 +20,29 @@ class Game():
         self.plat_data.add('n2b', [plat_image[0],plat_image[2]])
         self.plat_data.add('n3b', [plat_image[0],plat_image[1],plat_image[2]])
 
-        self.particles = ParticleList(canva_size)
+        self.particles = ParticleList()
         self.particles.new_type('flame0',1,[1,(1,2),(250,290), 4, 0.05,(-1,-0.1),(255,120, 60), (55,25,15), True])
         self.particles.new_type('candle',1,[1,(1,2),(250,290), 4, 0.2, (0,-15),(204,255,255), (0,20,20), False], 0)
         self.particles.new_type('spark0',1,[2,(3,4),(  0,360), 2, 0.05,     None,(200,200,100), False, False])
         self.particles.new_type('dusts0',1,[1,(2,3),(180,360), 4, 0.1 ,(0.1,0.1),(255,255,255), False, True])
+        self.particles.add_border(canva_size)
         self.ptc_id = 'flame0'
 
-        self.all_sprites = pygame.sprite.Group()
+        self.player_sprites = pygame.sprite.GroupSingle()
+        self.block_sprites = pygame.sprite.Group()
         self.plat_sprites = pygame.sprite.Group()
 
+        self.offset = [0,0]
         self.dt = 1
 
     def init_level(self):
-        self.all_sprites.empty()
+        self.player_sprites.empty()
+        self.player = Player()
+        self.player_sprites.add(self.player)
 
-        self.player = Player(self.canva.get_size())
-        self.all_sprites.add(self.player)
-
-        for i in range (4):
-            plat = Platform((100,50+80*i), self.plat_data.data['n3b'])
-            self.all_sprites.add(plat)
+        self.plat_sprites.empty()
+        for i in range (5):
+            plat = Platform((100,32+64*i), self.plat_data.data['n3b'])
             self.plat_sprites.add(plat)
 
     def update_canva(self):
@@ -76,18 +78,42 @@ class Game():
         self.dt = dt
         self.input(event_list)
         self.player.input(event_list)
-        self.player.move([],self.plat_sprites.sprites(), dt)
+        self.player.move(self.block_sprites.sprites(), self.plat_sprites.sprites(), dt)
         self.particles.update(self.dt)
-        self.all_sprites.update(self.dt)
+        self.plat_sprites.update(self.dt)
+        self.player.update(self.dt)
+        self.scroll(self.dt)
 
     def draw(self):
         self.canva.fill((0,0,100))
 
         self.particles.draw(self.canva)
-        for i in range(8):
+        for i in range(7):
             pygame.draw.rect(self.canva, (200,155,155),pygame.Rect(32*i,100,32,32+i*10))
+        for i in range(10):
+            pygame.draw.rect(self.canva, (25*i,255,255//(i+1)),pygame.Rect(224,32*i,32,32))
 
-        self.all_sprites.draw(self.canva)
-        self.player.vfx.draw(self.canva)
+        for platform in self.plat_sprites:
+            self.canva.blit(platform.image, (platform.rect.x-self.offset[0], platform.rect.y-self.offset[1]))
+
+        self.canva.blit(self.player.image, (self.player.rect.x-self.offset[0], self.player.rect.y-self.offset[1]))
+        self.player.vfx.draw(self.canva, self.offset)
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
+
+    def scroll(self, dt):
+        # Lock player
+        self.offset[0] += (self.player.rect.centerx - self.offset[0] - (self.canva.get_width()/2)) / 5 # offset X
+        self.offset[1] += (self.player.rect.centery - self.offset[1] - (self.canva.get_height()/2)) / 5 # offset Y
+
+        # Lock player
+        self.offset[0] += (self.player.rect.centerx - self.offset[0] - (self.canva.get_width()/2)) / 5 # offset X
+        self.offset[1] += (self.player.rect.centery - self.offset[1] - (self.canva.get_height()*6/7)) / 5 # offset Y
+
+        # player_y = self.player.rect.bottom
+        # hit_plat = self.player.vel.y
+        # if player_y < 192:
+        #     if hit_plat == 0:
+        #         self.offset[1] = 2
+        # else:
+        #     self.offset[1] = 0

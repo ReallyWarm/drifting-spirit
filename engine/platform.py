@@ -18,4 +18,6 @@ class Platform(pygame.sprite.Sprite):
         super().__init__()
         self.image = image
         self.rect = self.image.get_rect(topleft = pos)
- 
+    
+    def update(self, dt):
+        pass

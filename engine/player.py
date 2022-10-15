@@ -1,27 +1,32 @@
-import pygame, math
+from typing_extensions import Self
+import pygame
 from pygame.math import Vector2
 from engine.graphic.animate import Animate
 from engine.graphic.particlelist import ParticleList
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, canva_size):
+    def __init__(self):
         super().__init__()
         self.ani = {'run' : Animate("sprite/player-run.png", (0,0,24,32), 8, pixel_jump=2, frames=3),
                     'idle': Animate("sprite/player-idle.png",(0,0,24,32), 4, pixel_jump=2, frames=45),
                     'fall': Animate("sprite/player-fall.png",(0,0,24,32), 1),
                     'jump': Animate("sprite/player-jump.png",(0,0,24,32), 1)}
         self.image = self.ani['idle'].image
-        self.rect = self.image.get_rect(midbottom = (100,50))
+        self.rect = self.image.get_rect(midbottom = (150,300))
 
-        self.vfx = ParticleList(canva_size)
+        self.vfx = ParticleList()
         self.vfx.new_type('candle',1,[1,(1,2),(245,295), 5, 0.2, (0,-1.5),(204,255,255), (0,20,20), False], 0)
 
         self.state = 'idel'
         self.face_right = True
         self.moveL = False
         self.moveR = False
+        self.moveD = False
+        self.jump_time = [0,15]
         self.jumped = False
+        self.jumping = False
         
+        self.pos = Vector2(self.rect.topleft)
         self.vel = Vector2(0,0)
         self.acc = Vector2(0,0)
 
@@ -33,13 +38,20 @@ class Player(pygame.sprite.Sprite):
                 if event.key == pygame.K_d:
                     self.moveR = True
                 if event.key == pygame.K_j:
-                    self.jumped = True
+                    if not self.jumping:
+                        self.jumped = True
+                if event.key == pygame.K_s:
+                    self.moveD = True
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_a:
                     self.moveL = False
                 if event.key == pygame.K_d:
                     self.moveR = False
+                if event.key == pygame.K_j:
+                    self.jumped = False
+                if event.key == pygame.K_s:
+                    self.moveD = False
 
     def update(self, dt):
         if self.vel.y > 1:
@@ -65,11 +77,10 @@ class Player(pygame.sprite.Sprite):
 
     def move(self, collision_block, collision_platform, dt):
         # Max speed = acc / fric
-        acc = 0.64
-        fric = -0.2
-        max_y = 6.5
-        self.acc = Vector2(0,0.2*dt)
-        movement = Vector2(0,0)
+        acc = 0.6
+        fric = -0.15
+        max_y = 6
+        self.acc = Vector2(0, 0.2*dt)
 
         # Direction
         if self.moveR and self.moveL:
@@ -83,31 +94,32 @@ class Player(pygame.sprite.Sprite):
         else:
             direction_x = 0
 
-        if self.jumped:
-            self.vel.y = -5.5 * dt
+        if self.jumped and self.jump_time[0] < self.jump_time[1] / dt:
+            self.vel.y = -3.6 * dt
+            self.jump_time[0] += 1
+            self.jumping = True
+        else:
             self.jumped = False
+            self.jump_time[0] = 0
 
-        # Running
+        # Running    
         self.acc.x = direction_x * acc * dt
         self.acc.x += self.vel.x * fric
         self.vel += self.acc * dt
         self.vel.y = (max_y * dt) if (self.vel.y > max_y * dt) else (self.vel.y)
-        movement = self.vel + (0.5 * self.acc)
+        self.pos += self.vel + (0.5 * self.acc)
 
         # Stopping
-        if self.vel.x < 0.2 * dt and self.vel.x > -0.2 * dt:
+        if self.vel.x < 0.1 * dt and self.vel.x > -0.1 * dt:
             self.vel.x = 0
 
         # Update position
-        self.rect.midbottom = self.collision(collision_block, collision_platform, movement)
+        self.rect = self.collision(collision_block, collision_platform)
 
-    def collision(self, collision_block, collision_platform, movement):
+    def collision(self, collision_block, collision_platform):
         new_rect = self.rect.copy()
 
-        if movement.x < 0:
-            movement.x = math.ceil(movement.x)
-
-        new_rect.x += movement.x
+        new_rect.x = round(self.pos.x)
         # collide block X
         for block in collision_block:
             if block.rect.colliderect(new_rect):
@@ -116,14 +128,16 @@ class Player(pygame.sprite.Sprite):
                 elif self.vel.x < 0:
                     new_rect.left = block.rect.right
 
-        new_rect.y += movement.y
+        new_rect.y = round(self.pos.y)
         # collide platform
-        for platform in collision_platform:
-            if platform.rect.colliderect(new_rect):
-                if self.vel.y > 0:
-                    if abs(new_rect.bottom - platform.rect.top) <= platform.rect.height//3:
-                        new_rect.bottom = platform.rect.top
-                        self.vel.y = 0
+        if self.moveD == False:
+            for platform in collision_platform:
+                if platform.rect.colliderect(new_rect):
+                    if self.vel.y > 0:
+                        if abs(new_rect.bottom - platform.rect.top) <= platform.rect.height//2:
+                            new_rect.bottom = platform.rect.top
+                            self.vel.y = 0
+                            self.jumping = False
         # collide block Y
         for block in collision_block:
             if block.rect.colliderect(new_rect):
@@ -132,6 +146,7 @@ class Player(pygame.sprite.Sprite):
                 elif self.vel.y < 0:
                     new_rect.top = block.rect.bottom
                 self.vel.y = 0
+                self.jumping = False
 
         # Collide map
         if new_rect.right > 256:
@@ -141,5 +156,8 @@ class Player(pygame.sprite.Sprite):
         if new_rect.bottom > 320:
             new_rect.bottom = 320
             self.vel.y = 0
+            self.jumping = False
 
-        return new_rect.midbottom
+        self.pos = new_rect.topleft
+
+        return new_rect
