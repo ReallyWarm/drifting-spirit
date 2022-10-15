@@ -52,33 +52,36 @@ class SplashVFX():
         pygame.draw.circle(newsurf, color, (radius, radius), radius)
         return newsurf
 
-    def draw(self, surf):
+    def draw(self, surf, offset=[0,0]):
         if self.alive:
+            new_pos = self.loc.copy()
+            new_pos[0] -= offset[0]
+            new_pos[1] -= offset[1]
             # Circle
             if self.type == 1:
                 size = self.scl * self.spd / self.maxspd
-                pygame.draw.circle(surf, self.color, self.loc, size)
+                pygame.draw.circle(surf, self.color, new_pos, size)
 
                 if self.glowColor:
                     radius = size * 5 / 2
-                    surf.blit(self.circle_glow(radius, self.glowColor), (self.loc[0] - radius, self.loc[1] - radius), special_flags=pygame.BLEND_RGB_ADD)
+                    surf.blit(self.circle_glow(radius, self.glowColor), (new_pos[0] - radius, new_pos[1] - radius), special_flags=pygame.BLEND_RGB_ADD)
             # Spark shrink
             if self.type == 2:
                 points = [
-                [self.loc[0] , self.loc[1]],
-                [self.loc[0] - self.spd * self.scl * math.cos(self.ang + math.pi/6) * 0.6, self.loc[1] - self.spd * self.scl * math.sin(self.ang + math.pi/6) * 0.6],
-                [self.loc[0] - self.spd * self.scl * math.cos(self.ang) * 4, self.loc[1] - self.spd * self.scl * math.sin(self.ang) * 4],
-                [self.loc[0] - self.spd * self.scl * math.cos(self.ang - math.pi/6) * 0.6, self.loc[1] - self.spd * self.scl * math.sin(self.ang - math.pi/6) * 0.6]
+                [new_pos[0] , new_pos[1]],
+                [new_pos[0] - self.spd * self.scl * math.cos(self.ang + math.pi/6) * 0.6, new_pos[1] - self.spd * self.scl * math.sin(self.ang + math.pi/6) * 0.6],
+                [new_pos[0] - self.spd * self.scl * math.cos(self.ang) * 4, new_pos[1] - self.spd * self.scl * math.sin(self.ang) * 4],
+                [new_pos[0] - self.spd * self.scl * math.cos(self.ang - math.pi/6) * 0.6, new_pos[1] - self.spd * self.scl * math.sin(self.ang - math.pi/6) * 0.6]
                 ]
                 pygame.draw.polygon(surf, self.color, points)
             # Spark shrink side
             if self.type == 3:
                 dst_multi = (self.maxspd-self.spd)/self.maxspd
                 points = [
-                [self.loc[0] , self.loc[1]],
-                [self.loc[0] - self.scl * math.cos(self.ang + math.pi/2*dst_multi), self.loc[1] - self.scl * math.sin(self.ang + math.pi/2*dst_multi)],
-                [self.loc[0] - self.spd * self.scl * math.cos(self.ang) * 2, self.loc[1] - self.spd * self.scl * math.sin(self.ang) * 2],
-                [self.loc[0] - self.scl * math.cos(self.ang - math.pi/2*dst_multi), self.loc[1] - self.scl * math.sin(self.ang - math.pi/2*dst_multi)]
+                [new_pos[0] , new_pos[1]],
+                [new_pos[0] - self.scl * math.cos(self.ang + math.pi/2*dst_multi), new_pos[1] - self.scl * math.sin(self.ang + math.pi/2*dst_multi)],
+                [new_pos[0] - self.spd * self.scl * math.cos(self.ang) * 2, new_pos[1] - self.spd * self.scl * math.sin(self.ang) * 2],
+                [new_pos[0] - self.scl * math.cos(self.ang - math.pi/2*dst_multi), new_pos[1] - self.scl * math.sin(self.ang - math.pi/2*dst_multi)]
                 ]
                 pygame.draw.polygon(surf, self.color, points)
 

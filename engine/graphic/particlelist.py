@@ -2,12 +2,12 @@ import pygame, random
 from .particle import SplashVFX, DustVFX
 
 class ParticleList():
-    def __init__(self, screen_size):
+    def __init__(self):
         self.particle_data = dict()
         self.particle_type = dict()
         self.time = dict()
         self.particles = list()
-        self.screen_size = screen_size
+        self.border = None
 
     def new_type(self, name, type, data, time=1):
         self.particle_data[name] = data
@@ -16,6 +16,9 @@ class ParticleList():
 
     def get_name(self):
         return [key for key in self.particle_type]
+
+    def add_border(self, border):
+        self.border = border
     
     def add(self, name, location, dt, angle:list=None, fric=None):
         tmp = self.particle_data[name]
@@ -39,11 +42,12 @@ class ParticleList():
             particle.update(dt)
             if not particle.alive:
                 self.particles.pop(i)
-            elif particle.loc[0] > self.screen_size[0] + particle.spd * particle.scl * 4 or particle.loc[0] < -particle.spd * particle.scl * 4:
-                self.particles.pop(i)
-            elif particle.loc[1] > self.screen_size[1] + particle.spd * particle.scl * 4 or particle.loc[1] < -particle.spd * particle.scl * 4:
-                self.particles.pop(i)
-    def draw(self, surf):
+            if self.border is not None:
+                if particle.loc[0] > self.border[0] + particle.spd * particle.scl * 4 or particle.loc[0] < -particle.spd * particle.scl * 4:
+                    self.particles.pop(i)
+                elif particle.loc[1] > self.border[1] + particle.spd * particle.scl * 4 or particle.loc[1] < -particle.spd * particle.scl * 4:
+                    self.particles.pop(i)
+    def draw(self, surf, offset=[0,0]):
         for particle in self.particles:
-            particle.draw(surf)
+            particle.draw(surf, offset)
         
