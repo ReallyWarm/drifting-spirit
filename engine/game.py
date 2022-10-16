@@ -1,5 +1,4 @@
-from platform import platform
-import pygame, sys
+import pygame
 from engine.graphic.spritesheet import load_sheet
 from engine.graphic.particlelist import ParticleList
 from engine.platform import PlatformSet, Platform

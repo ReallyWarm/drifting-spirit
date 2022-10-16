@@ -1,4 +1,3 @@
-from typing_extensions import Self
 import pygame
 from pygame.math import Vector2
 from engine.graphic.animate import Animate

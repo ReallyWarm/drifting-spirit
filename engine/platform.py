@@ -1,5 +1,4 @@
 import pygame
-from engine.graphic.spritesheet import sprite_at
 
 class PlatformSet():
     def __init__(self):
