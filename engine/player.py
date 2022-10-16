@@ -6,6 +6,7 @@ from engine.graphic.particlelist import ParticleList
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
+        # Animation and Image
         self.ani = {'run' : Animate("sprite/player-run.png", (0,0,24,32), 8, pixel_jump=2, frames=3),
                     'idle': Animate("sprite/player-idle.png",(0,0,24,32), 4, pixel_jump=2, frames=45),
                     'fall': Animate("sprite/player-fall.png",(0,0,24,32), 1),
@@ -16,8 +17,14 @@ class Player(pygame.sprite.Sprite):
         self.image = self.ani['idle'].image
         self.rect = self.image.get_rect(midbottom = (150,300))
 
-        self.vfx = ParticleList()
-        self.vfx.new_type('candle',1,[1,(1,2),(245,295), 5, 0.2, (0,-1.5),(204,255,255), (0,20,20), False], 0)
+        # VFX
+        self.vfx_top = ParticleList()
+        self.vfx_top.new_type('candle',1,[1,(1,2),(245,295), 5, 0.2, (0,-1.5),(204,255,255), (0,20,20), False], 0)
+        self.vfx_back = ParticleList()
+        self.vfx_back.new_type('maskDXR',3,[self.ani['dshX'].image, 0, 90, 1, 10, (204,255,255)])
+        self.vfx_back.new_type('maskDXL',3,[pygame.transform.flip(self.ani['dshX'].image, True, False), 0, 90, 1, 10, (204,255,255)])
+        self.vfx_back.new_type('maskDD',3,[self.ani['dshD'].image, 0, 90, 1, 10, (204,255,255)])
+        self.vfx_back.new_type('maskDU',3,[self.ani['dshU'].image, 0, 90, 1, 10, (204,255,255)])
 
         self.state = 'idel'
         self.face_right = True
@@ -74,7 +81,6 @@ class Player(pygame.sprite.Sprite):
                     self.jumped = False
 
     def update(self, dt):
-        print(self.dash_direct)
         if self.dash_direct == 1:
             self.state = 'dshU'
         elif self.dash_direct == 2:
@@ -96,11 +102,23 @@ class Player(pygame.sprite.Sprite):
         else:
             self.image = pygame.transform.flip(image, True, False)
 
+
+        if self.dashing:
+            dash_key = ''
+            if self.state == 'dshX':
+                dash_key = 'maskDXR' if self.face_right else 'maskDXL'
+            elif self.state == 'dshD':
+                dash_key = 'maskDD'
+            elif self.state == 'dshU':
+                dash_key = 'maskDU'
+            self.vfx_back.add(dash_key, [self.rect.x, self.rect.y], dt, alpha_multi=0.5)
+        self.vfx_back.update(dt)
+
         mid_x, top_y = self.rect.midtop
         if self.state == 'idle' and self.ani['idle'].image_num != 3:
             top_y += 2
-        self.vfx.add('candle', [mid_x, top_y], dt)
-        self.vfx.update(dt)
+        self.vfx_top.add('candle', [mid_x, top_y], dt)
+        self.vfx_top.update(dt)
 
     def move(self, collision_block, collision_platform, dt):
         # Max speed = acc / fric

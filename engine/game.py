@@ -95,8 +95,9 @@ class Game():
         for platform in self.plat_sprites:
             self.canva.blit(platform.image, (platform.rect.x-self.offset[0], platform.rect.y-self.offset[1]))
 
+        self.player.vfx_back.draw(self.canva, self.offset)
         self.canva.blit(self.player.image, (self.player.rect.x-self.offset[0], self.player.rect.y-self.offset[1]))
-        self.player.vfx.draw(self.canva, self.offset)
+        self.player.vfx_top.draw(self.canva, self.offset)
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
 

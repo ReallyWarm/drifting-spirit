@@ -88,3 +88,39 @@ class SplashVFX():
 class DustVFX():
     def __init__(self):
         pass
+
+class MaskVFX():
+    def __init__(self, image:pygame.Surface, location:list, speed:float, angle:float, scale:float, time:int, color:tuple=(255,255,255), alpha_multi=1):
+        self.end_alpha = 255 / time
+        self.time = time
+        self.loc = location
+        self.spd = speed
+        self.ang = math.radians(angle)
+        self.alpha_multi = alpha_multi
+        self.mask_surf = pygame.mask.from_surface(image)
+        self.mask = self.mask_surf.to_surface(unsetcolor=(0,0,0,0), setcolor=(color[0],color[1],color[2],self.end_alpha*self.time*self.alpha_multi))
+        if scale != 1:
+            self.scl = scale
+            self.mask = pygame.transform.scale(self.mask, (self.mask.get_width()*scale, self.mask.get_height()*scale))
+        self.alive = True
+    
+    def next_movement(self, dt):
+        return [self.spd * math.cos(self.ang) * dt, self.spd * math.sin(self.ang) * dt]
+
+    def update(self, dt):
+        movement = self.next_movement(dt)
+        self.loc[0] += movement[0]
+        self.loc[1] += movement[1]
+
+        self.mask.set_alpha(self.end_alpha*self.time*self.alpha_multi)
+
+        self.time -= 1 * dt
+        if self.time <= 0:
+            self.alive = False
+
+    def draw(self, surf, offset=[0,0]):
+        if self.alive:
+            new_pos = self.loc.copy()
+            new_pos[0] -= offset[0]
+            new_pos[1] -= offset[1]
+            surf.blit(self.mask, new_pos)
