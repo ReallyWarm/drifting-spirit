@@ -1,8 +1,8 @@
 from engine.graphic.spritesheet import load_sheet
 
 class Animate():
-    def __init__(self, location, rect, image_count, pixel_jump=0, loop=True, frames=1):
-        self.sprites = load_sheet(location, rect, image_count, pixel_jump)
+    def __init__(self, location, rect, image_count, pixel_jump=0, loop=True, frames=1, start_at=0):
+        self.sprites = load_sheet(location, rect, image_count, pixel_jump, start_at)
         self.loop = loop
         self.image_num = 0
         self.image = self.sprites[self.image_num]
