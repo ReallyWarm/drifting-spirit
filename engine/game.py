@@ -108,7 +108,7 @@ class Game():
 
         # Lock offset player
         # self.offset[0] += (self.player.rect.centerx - self.offset[0] - (self.canva.get_width()/2)) / 5 # offset X
-        self.offset[1] += (self.player.rect.centery - self.offset[1] - (self.canva.get_height()*6/7)) / 5 # offset Y
+        self.offset[1] += (self.player.rect.centery - self.offset[1] - (self.canva.get_height()*5/7)) / 5 # offset Y
 
         # self.offset = [0,0]
         # player_y = self.player.rect.bottom
