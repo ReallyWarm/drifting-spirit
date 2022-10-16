@@ -25,7 +25,7 @@ class GameWindow():
 
             self.gameMenu.run_menu(event_list, dt)
 
-            pygame.display.flip()
+            pygame.display.update()
             delta = self.clock.tick(FPS)
         pygame.quit()
         sys.exit()
