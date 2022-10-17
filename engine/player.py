@@ -97,7 +97,7 @@ class Player(pygame.sprite.Sprite):
             self.state = 'idle'
 
         image = self.ani[self.state].update(dt)
-        if self.face_right:
+        if self.face_right or self.state == 'dshD' or self.state == 'dshU':
             self.image = image
         else:
             self.image = pygame.transform.flip(image, True, False)
