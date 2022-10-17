@@ -3,6 +3,7 @@ from engine.graphic.spritesheet import load_sheet
 from engine.graphic.particlelist import ParticleList
 from engine.platform import PlatformSet, Platform
 from engine.player import Player
+from engine.genlevel import gen_level
 
 class Game():
     def __init__(self, canva_size):
@@ -39,10 +40,31 @@ class Game():
         self.player = Player()
         self.player_sprites.add(self.player)
 
+        self.level = list()
+        level_data = gen_level('data/map.json')
+        for layer in level_data:
+            layer_data = list()
+            for data in layer:
+                if data[0] in ['n1b','n2b','n3b']:
+                    plat = Platform((data[2],self.canva.get_height()-data[3]), self.plat_data.data[data[0]])
+                    layer_data.append(plat)
+            self.level.append(layer_data)
+                    
         self.plat_sprites.empty()
-        for i in range (5):
-            plat = Platform((100,32+64*i), self.plat_data.data['n3b'])
-            self.plat_sprites.add(plat)
+        c_loop = 0
+        for layer in reversed(self.level):
+            self.make_layer(layer)
+
+            c_loop += 1
+            if c_loop >= 4:
+                break
+
+        self.next_plat = len(self.level) - 4
+
+    def make_layer(self, layer):
+        for data in layer:
+            if isinstance(data, Platform):
+                self.plat_sprites.add(data)
 
     def update_canva(self):
         self.screen = pygame.display.get_surface()
@@ -82,6 +104,19 @@ class Game():
         self.plat_sprites.update(self.dt)
         self.player.update(self.dt)
         self.scroll(self.dt)
+
+        # Loaad layer on screen
+        top_plat = 320
+        for platform in self.plat_sprites.sprites():
+            if self.player.rect.bottom - platform.rect.top < -128:
+                self.plat_sprites.remove(platform)
+            if platform.rect.bottom < top_plat:
+                top_plat = platform.rect.bottom
+
+        if top_plat - self.player.rect.top > -204:
+            if self.next_plat > 0:
+                self.next_plat -= 1
+            self.make_layer(self.level[self.next_plat])
 
     def draw(self):
         self.canva.fill((0,0,100))
