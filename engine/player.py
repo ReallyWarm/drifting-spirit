@@ -15,7 +15,7 @@ class Player(pygame.sprite.Sprite):
                     'dshD': Animate("sprite/player-dashes.png",(2,0,24,32), 1, start_at=1),
                     'dshU': Animate("sprite/player-dashes.png",(2,0,24,32), 1, start_at=2)}
         self.image = self.ani['idle'].image
-        self.rect = self.image.get_rect(midbottom = (150,300))
+        self.rect = self.image.get_rect(midbottom = (150,320))
 
         # VFX
         self.vfx_top = ParticleList()
@@ -28,16 +28,17 @@ class Player(pygame.sprite.Sprite):
 
         self.state = 'idel'
         self.face_right = True
+        self.hit_ground = False
         self.moveL = False
         self.moveR = False
         self.moveU = False
         self.moveD = False
-        self.jump_time = [0,15]
+        self.jump_time = [0,12]
         self.jumped = False
         self.jumping = False
         self.dashing = False
         self.dash_direct = 0
-        self.dash_time = [0,16]
+        self.dash_time = [0,14]
         
         self.pos = Vector2(self.rect.topleft)
         self.vel = Vector2(0,0)
@@ -192,6 +193,8 @@ class Player(pygame.sprite.Sprite):
 
     def collision(self, collision_block, collision_platform):
         new_rect = self.rect.copy()
+        self.hit_ground = False
+        hit_y = False
 
         new_rect.x = round(self.pos.x)
         # collide block X
@@ -210,8 +213,7 @@ class Player(pygame.sprite.Sprite):
                     if self.vel.y > 0:
                         if abs(new_rect.bottom - platform.rect.top) <= platform.rect.height//2:
                             new_rect.bottom = platform.rect.top
-                            self.vel.y = 0
-                            self.jumping = False
+                            hit_y = True
         # collide block Y
         for block in collision_block:
             if block.rect.colliderect(new_rect):
@@ -219,8 +221,7 @@ class Player(pygame.sprite.Sprite):
                     new_rect.bottom = block.rect.top
                 elif self.vel.y < 0:
                     new_rect.top = block.rect.bottom
-                self.vel.y = 0
-                self.jumping = False
+                hit_y = True
 
         # Collide map
         if new_rect.right > 256:
@@ -229,8 +230,13 @@ class Player(pygame.sprite.Sprite):
             new_rect.left = 0
         if new_rect.bottom > 320:
             new_rect.bottom = 320
+            hit_y = True
+
+        # If hit Y
+        if hit_y:
             self.vel.y = 0
             self.jumping = False
+            self.hit_ground = True
 
         self.pos = new_rect.topleft
 

@@ -108,12 +108,13 @@ class Game():
         # Loaad layer on screen
         top_plat = 320
         for platform in self.plat_sprites.sprites():
-            if self.player.rect.bottom - platform.rect.top < -128:
+            # 32 * 3/2 + 16
+            if self.player.rect.bottom - platform.rect.top < -64 and self.player.hit_ground:
                 self.plat_sprites.remove(platform)
             if platform.rect.bottom < top_plat:
                 top_plat = platform.rect.bottom
-
-        if top_plat - self.player.rect.top > -204:
+        # 32 * 3/2 * 3 + 16
+        if top_plat - self.player.rect.top > - 160:
             if self.next_plat > 0:
                 self.next_plat -= 1
             self.make_layer(self.level[self.next_plat])

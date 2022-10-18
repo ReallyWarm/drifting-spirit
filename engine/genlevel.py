@@ -2,6 +2,7 @@ import json, random
 
 def gen_level(location):
     TILE_SIZE = 32
+    SCALE = 3/2
     level_data = []
 
     with open(location, 'r') as f:
@@ -11,7 +12,7 @@ def gen_level(location):
     for height in map:
         this_data = map[height]
         height_data = list()
-        pos_y = int(height) * TILE_SIZE * 2
+        pos_y = int(height) * TILE_SIZE * SCALE
         rand_x = [0,1,2,3,4,5,6,7]
         for name in this_data:
             if name == 'n2b':
