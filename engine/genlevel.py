@@ -20,6 +20,8 @@ def gen_level(location):
             elif name == 'n3b':
                 rand_x.remove(7)
                 rand_x.remove(6)
+            elif name in ['imp']:
+                pos_y += TILE_SIZE
             for _ in range(this_data[name]):
                 index_x = random.choice(rand_x)
                 rand_x.remove(index_x)

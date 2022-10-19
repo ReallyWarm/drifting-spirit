@@ -2,6 +2,7 @@ import pygame
 from engine.graphic.spritesheet import load_sheet
 from engine.graphic.particlelist import ParticleList
 from engine.platform import PlatformSet, Platform
+from engine.enemy import ImpEnemy
 from engine.player import Player
 from engine.genlevel import gen_level
 
@@ -31,6 +32,7 @@ class Game():
         self.player_sprites = pygame.sprite.GroupSingle()
         self.block_sprites = pygame.sprite.Group()
         self.plat_sprites = pygame.sprite.Group()
+        self.enemy_sprites = pygame.sprite.Group()
 
         self.offset = [0,0]
         self.dt = 1
@@ -48,6 +50,9 @@ class Game():
                 if data[0] in ['n1b','n2b','n3b']:
                     plat = Platform((data[2],self.canva.get_height()-data[3]), self.plat_data.data[data[0]])
                     layer_data.append(plat)
+                elif data[0] in ['imp']:
+                    enemy = ImpEnemy((data[2],self.canva.get_height()-data[3]))
+                    layer_data.append(enemy)
             self.level.append(layer_data)
                     
         self.plat_sprites.empty()
@@ -65,6 +70,8 @@ class Game():
         for data in layer:
             if isinstance(data, Platform):
                 self.plat_sprites.add(data)
+            elif isinstance(data, ImpEnemy):
+                self.enemy_sprites.add(data)
 
     def update_canva(self):
         self.screen = pygame.display.get_surface()
@@ -102,6 +109,7 @@ class Game():
         self.player.move(self.block_sprites.sprites(), self.plat_sprites.sprites(), dt)
         self.particles.update(self.dt)
         self.plat_sprites.update(self.dt)
+        self.enemy_sprites.update(self.dt)
         self.player.update(self.dt)
         self.scroll(self.dt)
 
@@ -130,6 +138,8 @@ class Game():
 
         for platform in self.plat_sprites:
             self.canva.blit(platform.image, (platform.rect.x-self.offset[0], platform.rect.y-self.offset[1]))
+        for enemy in self.enemy_sprites:
+            self.canva.blit(enemy.image, (enemy.rect.x-self.offset[0], enemy.rect.y-self.offset[1]))
 
         self.player.vfx_back.draw(self.canva, self.offset)
         self.canva.blit(self.player.image, (self.player.rect.x-self.offset[0], self.player.rect.y-self.offset[1]))
