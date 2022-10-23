@@ -1,7 +1,7 @@
 import pygame, sys
 from engine.menu import Menu
 
-FPS = 60
+FPS = 30
 
 class GameWindow():
     def __init__(self):

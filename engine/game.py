@@ -107,22 +107,31 @@ class Game():
         self.input(event_list)
         self.player.input(event_list)
         self.player.move(self.block_sprites.sprites(), self.plat_sprites.sprites(), dt)
-        self.particles.update(self.dt)
         self.plat_sprites.update(self.dt)
         self.enemy_sprites.update(self.dt)
         self.player.update(self.dt)
+        self.particles.update(self.dt)
         self.scroll(self.dt)
 
-        # Loaad layer on screen
+        for enemy in self.enemy_sprites.sprites():
+            if enemy.rect.colliderect(self.player.rect):
+                if self.player.vel.y > 0:
+                    pass
+
+        # Level loading
         top_plat = 320
+        # Remove off screen platforms
         for platform in self.plat_sprites.sprites():
-            # 32 * 3/2 + 16
-            if self.player.rect.bottom - platform.rect.top < -64 and self.player.hit_ground:
+            if self.player.rect.bottom - platform.rect.top < -64 and self.player.hit_ground: # 32 * 3/2 + 16
                 self.plat_sprites.remove(platform)
             if platform.rect.bottom < top_plat:
                 top_plat = platform.rect.bottom
-        # 32 * 3/2 * 3 + 16
-        if top_plat - self.player.rect.top > - 160:
+        # Remove off screen enemies
+        for enemy in self.enemy_sprites.sprites():
+            if self.player.rect.bottom - enemy.rect.top < -64 and self.player.hit_ground: # 32 * 3/2 + 16
+                self.enemy_sprites.remove(enemy)      
+        # Make next layer
+        if top_plat - self.player.rect.top > - 160: # 32 * 3/2 * 3 + 16
             if self.next_plat > 0:
                 self.next_plat -= 1
             self.make_layer(self.level[self.next_plat])
@@ -154,7 +163,7 @@ class Game():
 
         # Lock offset player
         # self.offset[0] += (self.player.rect.centerx - self.offset[0] - (self.canva.get_width()/2)) / 5 # offset X
-        self.offset[1] += (self.player.rect.centery - self.offset[1] - (self.canva.get_height()*5/7)) / 5 # offset Y
+        self.offset[1] += ((self.player.rect.centery - self.offset[1] - (self.canva.get_height()*5/7)) / 5) * dt # offset Y
 
         # self.offset = [0,0]
         # player_y = self.player.rect.bottom

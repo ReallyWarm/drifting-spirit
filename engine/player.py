@@ -19,7 +19,7 @@ class Player(pygame.sprite.Sprite):
 
         # VFX
         self.vfx_top = ParticleList()
-        self.vfx_top.new_type('candle',1,[1,(1,2),(245,295), 5, 0.2, (0,-1.5),(204,255,255), (0,20,20), False], 0)
+        self.vfx_top.new_type('candle',1,[1,(1,2),(245,295), 5, 0.2, (0,-1.5),(204,255,255), (0,20,20), False])
         self.vfx_back = ParticleList()
         self.vfx_back.new_type('maskDXR',3,[self.ani['dshX'].image, 0, 90, 1, 10, (204,255,255)])
         self.vfx_back.new_type('maskDXL',3,[pygame.transform.flip(self.ani['dshX'].image, True, False), 0, 90, 1, 10, (204,255,255)])
@@ -118,7 +118,9 @@ class Player(pygame.sprite.Sprite):
         mid_x, top_y = self.rect.midtop
         if self.state == 'idle' and self.ani['idle'].image_num != 3:
             top_y += 2
-        self.vfx_top.add('candle', [mid_x, top_y], dt)
+        
+        for i in range(2):
+            self.vfx_top.add('candle', [mid_x, top_y], dt)
         self.vfx_top.update(dt)
 
     def move(self, collision_block, collision_platform, dt):
@@ -211,7 +213,7 @@ class Player(pygame.sprite.Sprite):
             for platform in collision_platform:
                 if platform.rect.colliderect(new_rect):
                     if self.vel.y > 0:
-                        if abs(new_rect.bottom - platform.rect.top) <= platform.rect.height//2:
+                        if new_rect.bottom <= platform.rect.centery or self.vel.y > platform.rect.height // 2:
                             new_rect.bottom = platform.rect.top
                             hit_y = True
         # collide block Y
