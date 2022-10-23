@@ -1,6 +1,6 @@
 import pygame
 from engine.game import Game
-from engine.graphic.button import Button
+from engine.graphic.gameui import Button
 
 class Menu():
     def __init__(self, scr_id=1):
@@ -106,7 +106,7 @@ class Menu():
                 self.scale = (self.scr_size[0] / self.scr_default[0], self.scr_size[1] / self.scr_default[1])
                 self.screen = pygame.display.set_mode(self.scr_size, 0, 32)
                 self.set_button()
-                self.game.update_canva()
+                self.game.update_surface(self.scale)
   
         self.screen.fill((100,220,155))
         self.back_button.draw(self.screen)

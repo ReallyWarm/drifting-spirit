@@ -40,3 +40,28 @@ class Button(pygame.sprite.Sprite):
 
     def draw(self, surf):
         surf.blit(self.image, self.rect.topleft)
+
+class PowerUI(pygame.sprite.Sprite):
+    def __init__(self, type, pos, rect, image_state):
+        super().__init__()
+        self.type = type
+        self.pos = pos
+        self.rect = rect
+        self.image_state = image_state
+
+        for i in range(len(self.image_state)):
+            self.image_state[i] = pygame.transform.scale(self.image_state[i], self.rect.size)
+
+        self.recharge = True
+        self.image = self.image_state[0]
+
+    def update(self, player):
+        if self.pos > player.power_amount:
+            self.recharge = False
+            if self.type == 1:
+                self.image = self.image_state[1]
+            if self.type == 2:
+                self.image = pygame.Surface(self.rect.size)
+        else:
+            self.recharge = True
+            self.image = self.image_state[0]
