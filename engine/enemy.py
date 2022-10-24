@@ -9,6 +9,8 @@ class ImpEnemy(pygame.sprite.Sprite):
         self.image = self.ani['idle'].image
         self.rect = self.image.get_rect(topleft = pos)
         self.state = 'idle'
+
+        self.hitbox = pygame.Rect(self.rect.left+2, self.rect.top+2, self.rect.width-4, self.rect.height-4)
     
     def update(self, dt):
         image = self.ani[self.state].update(dt)

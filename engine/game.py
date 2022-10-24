@@ -46,6 +46,7 @@ class Game():
         self.power_ui_sprites = pygame.sprite.Group()
 
         self.offset = [0,0]
+        self.height_meter = 0
         self.dt = 1
 
     def update_surface(self, win_scale):
@@ -66,6 +67,9 @@ class Game():
         self.power_offset = (0*sw, 76*sh)
 
     def init_level(self):
+        self.offset = [0,0]
+        self.height_meter = 0
+
         self.player_sprites.empty()
         self.player = Player()
         self.player_sprites.add(self.player)
@@ -157,11 +161,11 @@ class Game():
                 self.power_ui_sprites.remove(power_ui)
                 self.power_index -= 1
 
-        print(len(self.enemy_sprites.sprites()))
+        # print(len(self.enemy_sprites.sprites()))
 
         # collide enemies
         for enemy in self.enemy_sprites.sprites():
-            if enemy.rect.colliderect(self.player.rect):
+            if enemy.hitbox.colliderect(self.player.rect):
                 if self.player.dashing:
                     self.enemy_sprites.remove(enemy)
                 elif not self.player.immunity:
@@ -171,6 +175,12 @@ class Game():
                     else:
                         self.player.damaged = True
                         print("hit")
+        
+        current_height = (self.canva.get_height() - self.player.rect.bottom) * 48 / 10
+        if current_height > self.height_meter:
+            self.height_meter = current_height
+
+        # print(self.height_meter)
 
         # Level loading
         top_plat = 320
@@ -193,10 +203,10 @@ class Game():
     def draw(self):
         self.canva.fill((0,0,100))
 
-        for i in range(7):
-            pygame.draw.rect(self.canva, (200,155,155),pygame.Rect(32*i,100,32,32+i*10))
-        for i in range(10):
-            pygame.draw.rect(self.canva, (25*i,255,255//(i+1)),pygame.Rect(224,32*i,32,32))
+        # for i in range(7):
+        #     pygame.draw.rect(self.canva, (200,155,155),pygame.Rect(32*i,100,32,32+i*10))
+        # for i in range(10):
+        #     pygame.draw.rect(self.canva, (25*i,255,255//(i+1)),pygame.Rect(224,32*i,32,32))
 
         for platform in self.plat_sprites:
             self.canva.blit(platform.image, (platform.rect.x-self.offset[0], platform.rect.y-self.offset[1]))
