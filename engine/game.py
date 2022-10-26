@@ -8,20 +8,19 @@ from engine.player import Player
 from engine.genlevel import gen_level
 
 class Game():
-    def __init__(self, canva_size):
-        self.screen = pygame.display.get_surface()
-        self.scr_size = pygame.display.get_window_size()
+    def __init__(self, canva_size, scale):
         self.canva = pygame.Surface(canva_size) # 3:2
         self.cva_rect = self.canva.get_rect()
-        self.cva_scale = (1,1)
-        self.win_scale = (1,1)
 
-        self.normal_power = load_sheet("sprite/platform.png", (0,0,32,32), 2)
-        self.extra_power = load_sheet("sprite/player-fall.png", (24,0,32,32), 1)
-        self.power_rect = pygame.Rect(40, self.scr_size[1] - 106, 64, 64)
-        self.power_offset = (0,76)
+        self.normal_power = load_sheet("sprite/power-ui.png", (0,0,32,32), 2)
+        self.extra_power = load_sheet("sprite/power-ui.png", (0,0,32,32), 1, start_at=2)
 
-        self.update_surface(self.win_scale)
+        self.height_meter = 0
+
+        self.update_surface(scale)
+
+        self.offset = [0,0]
+        self.dt = 1
 
         plat_image = list()
         plat_image.extend(load_sheet("sprite/platform.png", (0,0,32,16), 4))
@@ -45,26 +44,25 @@ class Game():
         self.enemy_sprites = pygame.sprite.Group()
         self.power_ui_sprites = pygame.sprite.Group()
 
-        self.offset = [0,0]
-        self.height_meter = 0
-        self.dt = 1
-
     def update_surface(self, win_scale):
         self.screen = pygame.display.get_surface()
         self.scr_size = pygame.display.get_window_size()
 
         cva_w = (((self.scr_size[0] // 15) * 8) // 128) * 128
         cva_h = (cva_w // 4) * 5
-        self.cva_rect.size = (cva_w, cva_h)
-        self.cva_rect.topleft = ((self.scr_size[0] - cva_w) // 2, (self.scr_size[1] - cva_h) // 2)
 
+        self.cva_rect = pygame.Rect((self.scr_size[0] - cva_w) // 2, (self.scr_size[1] - cva_h) // 2, cva_w, cva_h)
         self.cva_scale = (self.canva.get_width() / cva_w, self.canva.get_height() / cva_h)
         self.win_scale = win_scale
         
         sw, sh = self.win_scale
-        self.power_rect.size = (64*sw, 64*sh)
-        self.power_rect.topleft = (40*sw, self.scr_size[1] - 106*sh)
+
+        self.font = pygame.font.SysFont(None, int(30*sh))
+
+        self.power_rect = pygame.Rect(40*sw, self.scr_size[1] - 106*sh, 64*sw, 64*sh)
         self.power_offset = (0*sw, 76*sh)
+
+        self.height_rect = pygame.Rect(30*sw, 30*sh, 200*sw, 50*sh)
 
     def init_level(self):
         self.offset = [0,0]
@@ -176,9 +174,11 @@ class Game():
                         self.player.damaged = True
                         print("hit")
         
-        current_height = (self.canva.get_height() - self.player.rect.bottom) * 48 / 10
+        current_height = (self.canva.get_height() - self.player.rect.bottom) * 10 // 32
         if current_height > self.height_meter:
             self.height_meter = current_height
+
+        self.height_text = self.font.render(f'Height : {self.height_meter}', True, (0,0,0))
 
         # print(self.height_meter)
 
@@ -221,6 +221,8 @@ class Game():
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
         self.power_ui_sprites.draw(self.screen)
+        pygame.draw.rect(self.screen, (255,255,255),self.height_rect)
+        self.screen.blit(self.height_text, self.height_text.get_rect(midleft=(self.height_rect.x+self.height_rect.width//10, self.height_rect.y+self.height_rect.height//2)))
 
     def scroll(self, dt):
         # Lock player

@@ -22,21 +22,27 @@ class ParticleList():
     
     def add(self, name, location, dt, 
                   angle:list=None, fric=None, # type 1
-                  alpha_multi=1): # type 3
-        tmp = self.particle_data[name]
+                  alpha_multi=1, color=None): # type 3
+        tmp = self.particle_data[name].copy()
+
         if angle is not None:
             tmp[2] = angle
-        if fric is not None:
-            tmp[4] = fric
+        
         thistype = self.particle_type[name]
         self.time[name][0] += 1
         if self.time[name][0] >= self.time[name][1] / dt:
             if thistype == 1:
+                if fric is not None:
+                    tmp[4] = fric
+                if color is not None:
+                    tmp[6] = color
                 self.particles.append(SplashVFX(tmp[0], location, random.randint(tmp[1][0], tmp[1][1]), random.randint(tmp[2][0], tmp[2][1]), 
                                                 tmp[3], tmp[4], tmp[5], tmp[6], tmp[7], tmp[8]))
             if thistype == 2:
                 self.particles.append(DustVFX())
             if thistype == 3:
+                if color is not None:
+                    tmp[5] = color
                 self.particles.append(MaskVFX(tmp[0], location, tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], alpha_multi))
 
             self.time[name][0] = 0

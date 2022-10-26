@@ -20,7 +20,7 @@ class Menu():
         self.back_button = None
         self.set_button()
 
-        self.game = Game((256,320))
+        self.game = Game((256,320), self.scale)
         self.new_game = True
         self.run = True
 
@@ -32,10 +32,10 @@ class Menu():
         self.back_button = Button(self.scr_size[0] - 80*sw, 30*sh, 50*sw, 50*sh, (200,155,155), self.fontM, '->')
 
         self.main_menu_button.empty()
-        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 370*sh, 200*sw, 45*sh, (40,50,150), self.fontM, 'Play'))
-        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 290*sh, 200*sw, 45*sh, (40,50,150), self.fontM, 'Ranking'))
-        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 210*sh, 200*sw, 45*sh, (40,50,150), self.fontM, 'Options'))
-        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 130*sh, 200*sw, 45*sh, (40,50,150), self.fontM, 'Exit'))
+        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 370*sh, 200*sw, 50*sh, (40,50,150), self.fontM, 'Play'))
+        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 290*sh, 200*sw, 50*sh, (40,50,150), self.fontM, 'Ranking'))
+        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 210*sh, 200*sw, 50*sh, (40,50,150), self.fontM, 'Options'))
+        self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 130*sh, 200*sw, 50*sh, (40,50,150), self.fontM, 'Exit'))
 
         self.option_menu_button.empty()
         self.option_menu_button.add(Button(80*sw, 150*sh, 100*sw, 50*sh, (40,50,150), self.fontOp, f'{self.scr_option[0][0]}x{self.scr_option[0][1]}'))

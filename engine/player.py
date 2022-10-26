@@ -25,6 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.vfx_back.new_type('maskDXL',3,[pygame.transform.flip(self.ani['dshX'].image, True, False), 0, 90, 1, 10, (204,255,255)])
         self.vfx_back.new_type('maskDD',3,[self.ani['dshD'].image, 0, 90, 1, 10, (204,255,255)])
         self.vfx_back.new_type('maskDU',3,[self.ani['dshU'].image, 0, 90, 1, 10, (204,255,255)])
+        self.mask_color_extra = (255,240,204)
 
         self.state = 'idel'
         self.face_right = True
@@ -116,17 +117,6 @@ class Player(pygame.sprite.Sprite):
         else:
             self.image = pygame.transform.flip(image, True, False)
 
-        if self.dashing:
-            dash_key = ''
-            if self.state == 'dshX':
-                dash_key = 'maskDXR' if self.face_right else 'maskDXL'
-            elif self.state == 'dshD':
-                dash_key = 'maskDD'
-            elif self.state == 'dshU':
-                dash_key = 'maskDU'
-            self.vfx_back.add(dash_key, [self.rect.x, self.rect.y], dt, alpha_multi=0.5)
-        self.vfx_back.update(dt)
-
         # Player VFX
         mid_x, top_y = self.rect.midtop
         if self.state == 'idle' and self.ani['idle'].image_num != 3:
@@ -135,6 +125,22 @@ class Player(pygame.sprite.Sprite):
         for i in range(2):
             self.vfx_top.add('candle', [mid_x, top_y], dt)
         self.vfx_top.update(dt)
+
+        if self.dashing:
+            dash_key = ''
+            if self.state == 'dshX':
+                dash_key = 'maskDXR' if self.face_right else 'maskDXL'
+            elif self.state == 'dshD':
+                dash_key = 'maskDD'
+            elif self.state == 'dshU':
+                dash_key = 'maskDU'
+            
+            dash_color = None
+            if self.power_amount >= self.power_default:
+                dash_color = self.mask_color_extra
+            self.vfx_back.add(dash_key, [self.rect.x, self.rect.y], dt, alpha_multi=0.5,color=dash_color)
+
+        self.vfx_back.update(dt)
 
         # Power recharge
         if self.power_amount < self.power_default:
