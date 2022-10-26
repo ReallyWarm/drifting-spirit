@@ -41,7 +41,7 @@ class Player(pygame.sprite.Sprite):
         self.jumping = False
 
         self.power_default = 2
-        self.power_amount = 2
+        self.power_amount = self.power_default
         self.recharge_time = [0,100]
         self.dashing = False
         self.dash_direct = 0
