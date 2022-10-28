@@ -40,9 +40,14 @@ class Player(pygame.sprite.Sprite):
         self.jumped = False
         self.jumping = False
 
+        self.max_health = 5
+        self.health = self.max_health
+        self.rg_health = 0
+
         self.power_default = 2
         self.power_amount = self.power_default
         self.recharge_time = [0,100]
+
         self.dashing = False
         self.dash_direct = 0
         self.dash_time = [0,14]
@@ -63,6 +68,8 @@ class Player(pygame.sprite.Sprite):
                 if event.key == pygame.K_d:
                     self.moveR = True
                 if event.key == pygame.K_w:
+                    if self.health + self.rg_health < self.max_health:
+                        self.rg_health += 1
                     self.moveU = True
                 if event.key == pygame.K_s:
                     self.moveD = True
@@ -151,6 +158,11 @@ class Player(pygame.sprite.Sprite):
                 self.recharge_time[0] = 0
 
         if self.damaged:
+            if self.rg_health == 0:
+                self.health -= 1 
+            else:
+                self.rg_health -= 1
+
             self.immunity = True
             self.damaged = False
 

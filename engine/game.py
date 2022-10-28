@@ -1,6 +1,6 @@
 import pygame
-from engine.graphic.spritesheet import load_sheet
-from engine.graphic.gameui import PowerUI
+from engine.graphic.spritesheet import sprite_at, load_sheet
+from engine.graphic.gameui import HealthUI, PowerUI
 from engine.graphic.particlelist import ParticleList
 from engine.platform import PlatformSet, Platform
 from engine.enemy import ImpEnemy
@@ -12,10 +12,13 @@ class Game():
         self.canva = pygame.Surface(canva_size) # 3:2
         self.cva_rect = self.canva.get_rect()
 
-        self.normal_power = load_sheet("sprite/power-ui.png", (0,0,32,32), 2)
-        self.extra_power = load_sheet("sprite/power-ui.png", (0,0,32,32), 1, start_at=2)
-
         self.height_meter = 0
+
+        self.normal_health = sprite_at("sprite/heart-ui.png", (0,0,32,48))
+        self.regen_health = sprite_at("sprite/heart-ui.png", (32,0,32,48))
+
+        self.normal_power = load_sheet("sprite/power-ui.png", (0,0,64,64), 2)
+        self.extra_power = load_sheet("sprite/power-ui.png", (0,0,64,64), 1, start_at=2)
 
         self.update_surface(scale)
 
@@ -42,6 +45,7 @@ class Game():
         self.block_sprites = pygame.sprite.Group()
         self.plat_sprites = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
+        self.health_ui_sprites = pygame.sprite.Group()
         self.power_ui_sprites = pygame.sprite.Group()
 
     def update_surface(self, win_scale):
@@ -59,12 +63,16 @@ class Game():
 
         self.font = pygame.font.SysFont(None, int(30*sh))
 
-        self.power_rect = pygame.Rect(40*sw, self.scr_size[1] - 106*sh, 64*sw, 64*sh)
-        self.power_offset = (0*sw, 76*sh)
-
         self.height_rect = pygame.Rect(30*sw, 30*sh, 200*sw, 50*sh)
 
+        self.health_rect = pygame.Rect(30*sw, self.height_rect.bottom + 12*sh, 32*sw, 48*sh)
+        self.health_offset = (44*sw, 0*sh)
+
+        self.power_rect = pygame.Rect(30*sw, self.scr_size[1] - 94*sh, 64*sw, 64*sh)
+        self.power_offset = (0*sw, 76*sh)
+
     def init_level(self):
+        self.running = True
         self.offset = [0,0]
         self.height_meter = 0
 
@@ -95,11 +103,19 @@ class Game():
             self.next_plat -= 1
 
         # init UI
+        self.health_ui_sprites.empty()
+        self.health_index = 0
+        for i in range(self.player.health):
+            rect = self.health_rect.copy()
+            rect.x += self.health_offset[0] * i
+            self.health_index += 1
+            self.health_ui_sprites.add(HealthUI(self.health_index, rect, self.normal_health))
+
         self.power_ui_sprites.empty()
         self.power_index = 0
         for i in range(self.player.power_default):
             rect = self.power_rect.copy()
-            rect.top -= self.power_offset[1] * i
+            rect.y -= self.power_offset[1] * i
             self.power_index += 1
             self.power_ui_sprites.add(PowerUI(1, self.power_index, rect, self.normal_power))
         
@@ -141,26 +157,6 @@ class Game():
         self.particles.update(self.dt)
         self.scroll(self.dt)
 
-        # for i in self.power_ui_sprites.sprites():
-        #     print(i.pos, end=" ")
-        # print(self.player.power_amount)
-
-        # update UI
-        self.power_ui_sprites.update(self.player)
-        # Add extra power UI
-        for i in range(self.power_index, self.player.power_amount):
-            rect = self.power_rect.copy()
-            rect.top -= self.power_offset[1] * i
-            self.power_index += 1
-            self.power_ui_sprites.add(PowerUI(2, self.power_index, rect, self.extra_power))
-        # Remove extra power UI
-        for power_ui in self.power_ui_sprites.sprites():
-            if power_ui.type == 2 and not power_ui.recharge:
-                self.power_ui_sprites.remove(power_ui)
-                self.power_index -= 1
-
-        # print(len(self.enemy_sprites.sprites()))
-
         # collide enemies
         for enemy in self.enemy_sprites.sprites():
             if enemy.hitbox.colliderect(self.player.rect):
@@ -172,14 +168,44 @@ class Game():
                             self.enemy_sprites.remove(enemy)
                     else:
                         self.player.damaged = True
-                        print("hit")
-        
+                        # print("hit")
+
+        # update UI
         current_height = (self.canva.get_height() - self.player.rect.bottom) * 10 // 32
         if current_height > self.height_meter:
             self.height_meter = current_height
 
         self.height_text = self.font.render(f'Height : {self.height_meter}', True, (0,0,0))
 
+        self.health_ui_sprites.update(self.player)
+        self.power_ui_sprites.update(self.player)
+        # Add regen health UI
+        for i in range(self.health_index, self.player.health + self.player.rg_health):
+            rect = self.health_rect.copy()
+            rect.x += self.health_offset[0] * i
+            self.health_index += 1
+            self.health_ui_sprites.add(HealthUI(self.health_index, rect, self.regen_health))
+        # Add extra power UI
+        for i in range(self.power_index, self.player.power_amount):
+            rect = self.power_rect.copy()
+            rect.top -= self.power_offset[1] * i
+            self.power_index += 1
+            self.power_ui_sprites.add(PowerUI(2, self.power_index, rect, self.extra_power))
+        # Remove health UI
+        for health_ui in self.health_ui_sprites.sprites():
+            if not health_ui.show:
+                self.health_ui_sprites.remove(health_ui)
+                self.health_index -= 1
+        # Remove extra power UI
+        for power_ui in self.power_ui_sprites.sprites():
+            if power_ui.type == 2 and not power_ui.recharge:
+                self.power_ui_sprites.remove(power_ui)
+                self.power_index -= 1
+
+        # for i in self.power_ui_sprites.sprites():
+        #     print(i.pos, end=" ")
+        # print(self.player.power_amount)
+        # print(len(self.health_ui_sprites.sprites()), self.player.health, self.player.rg_health)
         # print(self.height_meter)
 
         # Level loading
@@ -199,6 +225,9 @@ class Game():
             self.make_layer(self.level[self.next_plat])
             if self.next_plat > 0:
                 self.next_plat -= 1
+
+        if self.player.health == 0:
+            self.running = False
 
     def draw(self):
         self.canva.fill((0,0,100))
@@ -220,9 +249,11 @@ class Game():
         self.particles.draw(self.canva)
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
-        self.power_ui_sprites.draw(self.screen)
+
         pygame.draw.rect(self.screen, (255,255,255),self.height_rect)
         self.screen.blit(self.height_text, self.height_text.get_rect(midleft=(self.height_rect.x+self.height_rect.width//10, self.height_rect.y+self.height_rect.height//2)))
+        self.health_ui_sprites.draw(self.screen)
+        self.power_ui_sprites.draw(self.screen)
 
     def scroll(self, dt):
         # Lock player

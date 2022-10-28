@@ -41,13 +41,26 @@ class Button(pygame.sprite.Sprite):
     def draw(self, surf):
         surf.blit(self.image, self.rect.topleft)
 
+class HealthUI(pygame.sprite.Sprite):
+    def __init__(self, pos, rect, image):
+        super().__init__()
+        self.pos = pos
+        self.rect = rect
+        self.image = image.copy()
+        self.image = pygame.transform.scale(self.image, self.rect.size)
+        self.show = True
+
+    def update(self, player):
+        if self.pos > player.health + player.rg_health:
+            self.show = False
+
 class PowerUI(pygame.sprite.Sprite):
     def __init__(self, type, pos, rect, image_state):
         super().__init__()
         self.type = type
         self.pos = pos
         self.rect = rect
-        self.image_state = image_state
+        self.image_state = image_state.copy()
 
         for i in range(len(self.image_state)):
             self.image_state[i] = pygame.transform.scale(self.image_state[i], self.rect.size)
@@ -60,8 +73,6 @@ class PowerUI(pygame.sprite.Sprite):
             self.recharge = False
             if self.type == 1:
                 self.image = self.image_state[1]
-            if self.type == 2:
-                self.image = pygame.Surface(self.rect.size)
         else:
             self.recharge = True
             self.image = self.image_state[0]

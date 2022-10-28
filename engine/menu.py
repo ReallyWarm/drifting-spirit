@@ -70,7 +70,7 @@ class Menu():
     def game_loop(self, event_list, dt):
         self.back_button.update(event_list)
 
-        if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked():
+        if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked() or not self.game.running:
             self.id = 0
             self.new_game = True
 
