@@ -39,25 +39,3 @@ class Imp(Enemy):
     
     def update(self, dt):
         self.image = self.ani[self.state].update(dt)
-
-class DangerZone(Enemy):
-    def __init__(self, pos, canvaSize, offset_player=106):
-        image = pygame.Surface(canvaSize)
-        image.fill((0,0,0))
-        self.offset_player = offset_player
-        self.pos = [pos[0],pos[1]+self.offset_player]
-        self.top_height = self.pos[1]
-
-        super().__init__(self.pos, image)
-
-    def update_height(self, player_pos):
-        if self.top_height > player_pos[1]:
-            self.top_height = player_pos[1]
-
-    def update(self, dt):
-        if self.top_height != self.pos[1]:
-            self.pos[1] += ((self.top_height - self.pos[1] + self.offset_player) / 5) * dt 
-            self.rect[1] = self.pos[1]
-    
-    def draw(self, surf, offset):
-        surf.blit(self.image, (self.rect.x-offset[0], self.rect.y-offset[1]))

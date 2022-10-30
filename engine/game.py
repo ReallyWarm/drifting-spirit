@@ -3,8 +3,9 @@ from engine.graphic.spritesheet import sprite_at, load_sheet
 from engine.graphic.gameui import HealthUI, PowerUI
 from engine.graphic.particlelist import ParticleList
 from engine.platform import PlatformSet, Platform
-from engine.enemy import Ghost, Imp, DangerZone
+from engine.enemy import Ghost, Imp
 from engine.player import Player
+from engine.object import DangerZone, Portal
 from engine.genlevel import gen_level
 
 class Game():
@@ -42,7 +43,6 @@ class Game():
         self.particles.add_border(canva_size)
         self.ptc_id = 'flame0'
 
-        self.player_sprites = pygame.sprite.GroupSingle()
         self.block_sprites = pygame.sprite.Group()
         self.plat_sprites = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
@@ -76,9 +76,7 @@ class Game():
         self.running = True
         self.height_meter = 0
 
-        self.player_sprites.empty()
         self.player = Player((150,320))
-        self.player_sprites.add(self.player)
 
         self.offset[0] = 0
         self.offset[1] = self.player.rect.centery - (self.canva.get_height()*3/5)
@@ -94,12 +92,15 @@ class Game():
                 if data[0] in ['n1b','n2b','n3b']:
                     plat = Platform((data[2],self.canva.get_height()-data[3]), self.plat_data.data[data[0]])
                     layer_data.append(plat)
-                elif data[0] in ['ght']:
+                elif data[0] == 'ght':
                     enemy = Ghost((data[2],self.canva.get_height()-data[3]))
                     layer_data.append(enemy)
-                elif data[0] in ['imp']:
+                elif data[0] == 'imp':
                     enemy = Imp((data[2],self.canva.get_height()-data[3]))
                     layer_data.append(enemy)
+                elif data[0] == 'prt':
+                    portal = Portal((data[2],self.canva.get_height()-data[3]))
+                    layer_data.append(portal)
             self.level.append(layer_data)
 
         # Create on screen level  
@@ -111,6 +112,8 @@ class Game():
             self.next_plat -= 1
 
         self.danger_zone = DangerZone((0,self.player.rect.bottom), (self.canva.get_width(), self.canva.get_height()//3))
+
+        self.portal = None
 
         # init UI
         self.health_ui_sprites.empty()
@@ -136,6 +139,8 @@ class Game():
                 self.plat_sprites.add(data)
             elif isinstance(data, (Ghost,Imp)):
                 self.enemy_sprites.add(data)
+            elif isinstance(data, (Portal)):
+                self.portal = data
 
     def input(self, event_list):
         mx, my = pygame.mouse.get_pos()
@@ -238,8 +243,11 @@ class Game():
 
         # Update danger zone
         if self.player.hit_ground:
-            self.danger_zone.update_height(self.player.rect.midbottom)   
+            self.danger_zone.update_height(self.player.rect.midbottom)
         self.danger_zone.update(self.dt)
+
+        if self.portal is not None:
+            self.portal.update(self.dt)
 
         # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()))
 
@@ -258,13 +266,11 @@ class Game():
             self.canva.blit(platform.image, (platform.rect.x-self.offset[0], platform.rect.y-self.offset[1]))
         for enemy in self.enemy_sprites:
             self.canva.blit(enemy.image, (enemy.rect.x-self.offset[0], enemy.rect.y-self.offset[1]))
-
-        self.player.vfx_back.draw(self.canva, self.offset)
-        self.canva.blit(self.player.image, (self.player.rect.x-self.offset[0], self.player.rect.y-self.offset[1]))
-        self.player.vfx_top.draw(self.canva, self.offset)
-
+        self.player.draw(self.canva, self.offset)
         self.particles.draw(self.canva)
         self.danger_zone.draw(self.canva, self.offset)
+        if self.portal is not None:
+            self.canva.blit(self.portal.image, (self.portal.rect.x-self.offset[0], self.portal.rect.y-self.offset[1]))
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
 

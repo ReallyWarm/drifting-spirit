@@ -299,3 +299,8 @@ class Player(pygame.sprite.Sprite):
         self.pos = new_rect.topleft
 
         return new_rect
+
+    def draw(self, surf, offset=[0,0]):
+        self.vfx_back.draw(surf, offset)
+        surf.blit(self.image, (self.rect.x-offset[0], self.rect.y-offset[1]))
+        self.vfx_top.draw(surf, offset)
