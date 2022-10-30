@@ -4,7 +4,7 @@ from engine.graphic.animate import Animate
 from engine.graphic.particlelist import ParticleList
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, pos):
         super().__init__()
         # Animation and Image
         self.ani = {'run' : Animate("sprite/player-run.png", (0,0,24,32), 8, pixel_jump=2, frames=3),
@@ -15,7 +15,7 @@ class Player(pygame.sprite.Sprite):
                     'dshD': Animate("sprite/player-dashes.png",(2,0,24,32), 1, start_at=1),
                     'dshU': Animate("sprite/player-dashes.png",(2,0,24,32), 1, start_at=2)}
         self.image = self.ani['idle'].image
-        self.rect = self.image.get_rect(midbottom = (150,320))
+        self.rect = self.image.get_rect(midbottom = pos)
 
         # VFX
         self.vfx_top = ParticleList()
@@ -182,7 +182,7 @@ class Player(pygame.sprite.Sprite):
 
     def move(self, collision_block, collision_platform, dt):
         # Max speed = acc / fric
-        acc = 0.6
+        acc = 0.5
         fric = -0.15
         max_y = 6
         self.acc = Vector2(0, 0.2*dt)
@@ -266,13 +266,12 @@ class Player(pygame.sprite.Sprite):
 
         new_rect.y = round(self.pos.y)
         # collide platform
-        if not self.moveD:
+        if not self.moveD and self.vel.y > 0:
             for platform in collision_platform:
                 if platform.rect.colliderect(new_rect):
-                    if self.vel.y > 0:
-                        if new_rect.bottom <= platform.rect.centery or self.vel.y > platform.rect.height // 2:
-                            new_rect.bottom = platform.rect.top
-                            hit_y = True
+                    if self.rect.bottom <= platform.rect.top < new_rect.bottom:
+                        new_rect.bottom = platform.rect.top
+                        hit_y = True
         # collide block Y
         for block in collision_block:
             if block.rect.colliderect(new_rect):

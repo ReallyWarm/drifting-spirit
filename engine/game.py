@@ -3,7 +3,7 @@ from engine.graphic.spritesheet import sprite_at, load_sheet
 from engine.graphic.gameui import HealthUI, PowerUI
 from engine.graphic.particlelist import ParticleList
 from engine.platform import PlatformSet, Platform
-from engine.enemy import ImpEnemy
+from engine.enemy import Ghost, Imp, DangerZone
 from engine.player import Player
 from engine.genlevel import gen_level
 
@@ -23,6 +23,7 @@ class Game():
         self.update_surface(scale)
 
         self.offset = [0,0]
+        self.scroll_pos = [0,0]
         self.dt = 1
 
         plat_image = list()
@@ -73,12 +74,16 @@ class Game():
 
     def init_level(self):
         self.running = True
-        self.offset = [0,0]
         self.height_meter = 0
 
         self.player_sprites.empty()
-        self.player = Player()
+        self.player = Player((150,320))
         self.player_sprites.add(self.player)
+
+        self.offset[0] = 0
+        self.offset[1] = self.player.rect.centery - (self.canva.get_height()*3/5)
+        self.scroll_pos[0] = 0
+        self.scroll_pos[1] = self.player.rect.centery - (self.canva.get_height()*3/5)
 
         # Load level data
         self.level = list()
@@ -89,8 +94,11 @@ class Game():
                 if data[0] in ['n1b','n2b','n3b']:
                     plat = Platform((data[2],self.canva.get_height()-data[3]), self.plat_data.data[data[0]])
                     layer_data.append(plat)
+                elif data[0] in ['ght']:
+                    enemy = Ghost((data[2],self.canva.get_height()-data[3]))
+                    layer_data.append(enemy)
                 elif data[0] in ['imp']:
-                    enemy = ImpEnemy((data[2],self.canva.get_height()-data[3]))
+                    enemy = Imp((data[2],self.canva.get_height()-data[3]))
                     layer_data.append(enemy)
             self.level.append(layer_data)
 
@@ -101,6 +109,8 @@ class Game():
         for i in range(5):
             self.make_layer(self.level[self.next_plat])
             self.next_plat -= 1
+
+        self.danger_zone = DangerZone((0,self.player.rect.bottom), (self.canva.get_width(), self.canva.get_height()//3))
 
         # init UI
         self.health_ui_sprites.empty()
@@ -124,7 +134,7 @@ class Game():
         for data in layer:
             if isinstance(data, Platform):
                 self.plat_sprites.add(data)
-            elif isinstance(data, ImpEnemy):
+            elif isinstance(data, (Ghost,Imp)):
                 self.enemy_sprites.add(data)
 
     def input(self, event_list):
@@ -212,19 +222,26 @@ class Game():
         top_plat = 320
         # Remove off screen platforms
         for platform in self.plat_sprites.sprites():
-            if self.player.rect.bottom - platform.rect.top < -64 and self.player.hit_ground: # 32 * 3/2 + 16
+            if self.player.rect.bottom - platform.rect.top < -96 and self.player.hit_ground: # 48 * 2
                 self.plat_sprites.remove(platform)
             if platform.rect.bottom < top_plat:
                 top_plat = platform.rect.bottom
         # Remove off screen enemies
         for enemy in self.enemy_sprites.sprites():
-            if self.player.rect.bottom - enemy.rect.top < -64 and self.player.hit_ground: # 32 * 3/2 + 16
+            if self.player.rect.bottom - enemy.rect.top < -96 and self.player.hit_ground: # 48 * 2
                 self.enemy_sprites.remove(enemy)      
         # Make next layer
-        if top_plat - self.player.rect.top > - 160: # 32 * 3/2 * 3 + 16
+        if top_plat - self.player.rect.top > - 128: # 48 * 3 - 16
             self.make_layer(self.level[self.next_plat])
             if self.next_plat > 0:
                 self.next_plat -= 1
+
+        # Update danger zone
+        if self.player.hit_ground:
+            self.danger_zone.update_height(self.player.rect.midbottom)   
+        self.danger_zone.update(self.dt)
+
+        # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()))
 
         if self.player.health == 0:
             self.running = False
@@ -247,6 +264,7 @@ class Game():
         self.player.vfx_top.draw(self.canva, self.offset)
 
         self.particles.draw(self.canva)
+        self.danger_zone.draw(self.canva, self.offset)
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
 
@@ -256,19 +274,14 @@ class Game():
         self.power_ui_sprites.draw(self.screen)
 
     def scroll(self, dt):
-        # Lock player
-        # self.offset[0] += (self.player.rect.centerx - self.offset[0] - (self.canva.get_width()/2)) / 5 # offset X
-        # self.offset[1] += (self.player.rect.centery - self.offset[1] - (self.canva.get_height()/2)) / 5 # offset Y
+        # Lock offset Y
+        self.offset[1] += ((self.player.rect.centery - self.offset[1] - (self.canva.get_height()*3/5)) / 5) * dt 
 
-        # Lock offset player
-        # self.offset[0] += (self.player.rect.centerx - self.offset[0] - (self.canva.get_width()/2)) / 5 # offset X
-        self.offset[1] += ((self.player.rect.centery - self.offset[1] - (self.canva.get_height()*5/7)) / 5) * dt # offset Y
-
-        # self.offset = [0,0]
-        # player_y = self.player.rect.bottom
-        # hit_plat = self.player.vel.y
-        # if player_y < 192:
-        #     if hit_plat == 0:
-        #         self.offset[1] = 2
+        # if self.player.hit_ground:
+        #     self.scroll_pos[1] = self.player.rect.centery
+            
+        # # Lock offset Y
+        # if self.offset[1] != self.scroll_pos[1]:
+        #     self.offset[1] += ((self.scroll_pos[1] - self.offset[1] - (self.canva.get_height()*3/5)) / 10) * dt
         # else:
-        #     self.offset[1] = 0
+        #     s
