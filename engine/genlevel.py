@@ -30,6 +30,12 @@ def gen_level(location):
             elif name in ['ght','imp']:
                 pos_y += TILE_SIZE
                 enmy = True
+            elif name == 'prt':
+                pos_x = (5 * TILE_SIZE) // 2
+                height_data.append(['n3b', 2, pos_x, pos_y])
+                pos_y += TILE_SIZE * SCALE
+                pos_x = (7 * TILE_SIZE) // 2
+                height_data.append([name, 3, pos_x, pos_y])
                 
             for _ in range(this_data[name]):
                 if enmy:
