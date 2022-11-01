@@ -194,6 +194,7 @@ class Game():
                 elif not self.player.immunity:
                     if self.player.vel.y > 0:
                         if self.player.rect.bottom <= enemy.rect.centery or self.player.vel.y > enemy.rect.height // 2:
+                            self.player.vel.y = -5
                             rm_enemy = True
                     else:
                         self.player.damaged = True
@@ -294,7 +295,7 @@ class Game():
         # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()), len(self.item_sprites.sprites()))
         print(self.score)
 
-        if self.player.health == 0:
+        if self.player.health == 0 or self.player.rect.colliderect(self.danger_zone.rect):
             self.running = False
 
     def draw(self):

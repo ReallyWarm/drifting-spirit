@@ -69,13 +69,10 @@ class Player(pygame.sprite.Sprite):
                 if event.key == pygame.K_d:
                     self.moveR = True
                 if event.key == pygame.K_w:
-                    # if self.health + self.rg_health < self.max_health:
-                    #     self.rg_health += 1
                     self.moveU = True
                 if event.key == pygame.K_s:
                     self.moveD = True
                 if event.key == pygame.K_j:
-                    self.power_amount = 6
                     if not self.jumping:
                         self.jumped = True
                 if event.key == pygame.K_k:
