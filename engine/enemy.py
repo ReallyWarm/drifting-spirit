@@ -9,8 +9,9 @@ class Enemy(pygame.sprite.Sprite):
         self.hitbox = pygame.Rect(self.rect.left+2, self.rect.top+2, self.rect.width-4, self.rect.height-4)
 
 class Ghost(Enemy):
-    def __init__(self, pos):
+    def __init__(self, name, pos):
         # Animation and Image
+        self.name = name
         self.ani = {'idle': Animate("sprite/ghost-idle.png",(0,0,32,32), 4, pixel_jump=2, frames=25)}
         self.state = 'idle'
 
@@ -25,8 +26,9 @@ class Ghost(Enemy):
         self.image = self.ani[self.state].update(dt)
 
 class Imp(Enemy):
-    def __init__(self, pos):
+    def __init__(self, name, pos):
         # Animation and Image
+        self.name = name
         self.ani = {'idle': Animate("sprite/imp-idle.png",(0,0,32,32), 9, pixel_jump=2, frames=25)}
         self.state = 'idle'
 

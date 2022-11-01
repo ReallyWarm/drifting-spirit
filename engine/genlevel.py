@@ -2,6 +2,7 @@ import json, random
 
 def gen_level(location):
     TILE_SIZE = 32
+    ITEM_SIZE = 24
     SCALE = 3/2
     level_data = []
 
@@ -14,10 +15,10 @@ def gen_level(location):
         height_data = list()
         this_y = int(height) * TILE_SIZE * SCALE
         plat_x = [0,1,2,3,4,5,6,7]
-        enmy_x = [0,1,2,3,4,5,6,7]
+        layer_x = [0,1,2,3,4,5,6,7]
         for name in this_data:
             pos_y = this_y
-            enmy = False
+            layer = False
             remove_near = 0
 
             if name == 'n2b':
@@ -29,7 +30,10 @@ def gen_level(location):
                 remove_near = 2
             elif name in ['ght','imp']:
                 pos_y += TILE_SIZE
-                enmy = True
+                layer = True
+            elif name in ['td1','th1','ts1']:
+                pos_y += ITEM_SIZE + 4
+                layer = True
             elif name == 'prt':
                 pos_x = (5 * TILE_SIZE) // 2
                 height_data.append(['n3b', 2, pos_x, pos_y])
@@ -38,9 +42,9 @@ def gen_level(location):
                 height_data.append([name, 3, pos_x, pos_y])
                 
             for _ in range(this_data[name]):
-                if enmy:
-                    index_x = random.choice(enmy_x)
-                    enmy_x.remove(index_x)
+                if layer:
+                    index_x = random.choice(layer_x)
+                    layer_x.remove(index_x)
                 else:
                     index_x = random.choice(plat_x)
                     plat_x.remove(index_x)

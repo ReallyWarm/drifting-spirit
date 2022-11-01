@@ -45,6 +45,7 @@ class Player(pygame.sprite.Sprite):
         self.rg_health = 0
 
         self.power_default = 2
+        self.power_max = 6
         self.power_amount = self.power_default
         self.recharge_time = [0,100]
 
@@ -68,8 +69,8 @@ class Player(pygame.sprite.Sprite):
                 if event.key == pygame.K_d:
                     self.moveR = True
                 if event.key == pygame.K_w:
-                    if self.health + self.rg_health < self.max_health:
-                        self.rg_health += 1
+                    # if self.health + self.rg_health < self.max_health:
+                    #     self.rg_health += 1
                     self.moveU = True
                 if event.key == pygame.K_s:
                     self.moveD = True

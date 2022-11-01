@@ -4,6 +4,7 @@ from engine.graphic.gameui import HealthUI, PowerUI
 from engine.graphic.particlelist import ParticleList
 from engine.platform import PlatformSet, Platform
 from engine.enemy import Ghost, Imp
+from engine.item import ItemDash, ItemHealth, ItemScore
 from engine.player import Player
 from engine.object import DangerZone, Portal
 from engine.genlevel import gen_level
@@ -46,6 +47,7 @@ class Game():
         self.block_sprites = pygame.sprite.Group()
         self.plat_sprites = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
+        self.item_sprites = pygame.sprite.Group()
         self.health_ui_sprites = pygame.sprite.Group()
         self.power_ui_sprites = pygame.sprite.Group()
 
@@ -75,6 +77,11 @@ class Game():
     def init_level(self):
         self.running = True
         self.height_meter = 0
+        self.score = {'height':0,
+                      'enemy':{'ght':0,'imp':0},
+                      'item':{'ts1':0,'th1':0},
+                      'health':0
+                     }
 
         self.player = Player((150,320))
 
@@ -90,22 +97,25 @@ class Game():
             layer_data = list()
             for data in layer:
                 if data[0] in ['n1b','n2b','n3b']:
-                    plat = Platform((data[2],self.canva.get_height()-data[3]), self.plat_data.data[data[0]])
-                    layer_data.append(plat)
+                    layer_data.append(Platform((data[2],self.canva.get_height()-data[3]),self.plat_data.data[data[0]]))
                 elif data[0] == 'ght':
-                    enemy = Ghost((data[2],self.canva.get_height()-data[3]))
-                    layer_data.append(enemy)
+                    layer_data.append(Ghost('ght',(data[2],self.canva.get_height()-data[3])))
                 elif data[0] == 'imp':
-                    enemy = Imp((data[2],self.canva.get_height()-data[3]))
-                    layer_data.append(enemy)
+                    layer_data.append(Imp('imp',(data[2],self.canva.get_height()-data[3])))
+                elif data[0] == 'td1':
+                    layer_data.append(ItemDash('td1',(data[2],self.canva.get_height()-data[3])))
+                elif data[0] == 'th1':
+                    layer_data.append(ItemHealth('th1',(data[2],self.canva.get_height()-data[3])))
+                elif data[0] == 'ts1':
+                    layer_data.append(ItemScore('ts1',(data[2],self.canva.get_height()-data[3])))
                 elif data[0] == 'prt':
-                    portal = Portal((data[2],self.canva.get_height()-data[3]))
-                    layer_data.append(portal)
+                    layer_data.append(Portal((data[2],self.canva.get_height()-data[3])))
             self.level.append(layer_data)
 
         # Create on screen level  
         self.plat_sprites.empty()
         self.enemy_sprites.empty()
+        self.item_sprites.empty()
         self.next_plat = len(self.level) - 1
         for i in range(5):
             self.make_layer(self.level[self.next_plat])
@@ -139,6 +149,8 @@ class Game():
                 self.plat_sprites.add(data)
             elif isinstance(data, (Ghost,Imp)):
                 self.enemy_sprites.add(data)
+            elif isinstance(data, (ItemDash,ItemHealth,ItemScore)):
+                self.item_sprites.add(data)
             elif isinstance(data, (Portal)):
                 self.portal = data
 
@@ -168,22 +180,52 @@ class Game():
         self.player.move(self.block_sprites.sprites(), self.plat_sprites.sprites(), dt)
         self.plat_sprites.update(self.dt)
         self.enemy_sprites.update(self.dt)
+        self.item_sprites.update(self.dt)
         self.player.update(self.dt)
         self.particles.update(self.dt)
         self.scroll(self.dt)
 
         # collide enemies
         for enemy in self.enemy_sprites.sprites():
+            rm_enemy = False
             if enemy.hitbox.colliderect(self.player.rect):
                 if self.player.dashing:
-                    self.enemy_sprites.remove(enemy)
+                    rm_enemy = True
                 elif not self.player.immunity:
                     if self.player.vel.y > 0:
                         if self.player.rect.bottom <= enemy.rect.centery or self.player.vel.y > enemy.rect.height // 2:
-                            self.enemy_sprites.remove(enemy)
+                            rm_enemy = True
                     else:
                         self.player.damaged = True
-                        # print("hit")
+
+            if rm_enemy:
+                self.score['enemy'][enemy.name] += 1
+                self.enemy_sprites.remove(enemy)
+
+        # collide items
+        for item in self.item_sprites.sprites():
+            if item.hitbox.colliderect(self.player.rect):
+                effect = item.amount
+                if isinstance(item, (ItemDash)):
+                    for i in range(effect):
+                        if self.player.power_amount < self.player.power_max:
+                            self.player.power_amount += 1
+                        else:
+                            break
+                elif isinstance(item, (ItemHealth)):
+                    if self.player.health + self.player.rg_health == self.player.max_health:
+                        self.score['item'][item.name] += 1
+                    else:
+                        for i in range(effect):
+                            if self.player.health + self.player.rg_health < self.player.max_health:
+                                self.player.rg_health += 1
+                            else:
+                                break
+                elif isinstance(item, (ItemScore)):
+                    for i in range(effect):
+                        self.score['item'][item.name] += 1
+
+                self.item_sprites.remove(item)
 
         # update UI
         current_height = (self.canva.get_height() - self.player.rect.bottom) * 10 // 32
@@ -249,7 +291,8 @@ class Game():
         if self.portal is not None:
             self.portal.update(self.dt)
 
-        # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()))
+        # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()), len(self.item_sprites.sprites()))
+        print(self.score)
 
         if self.player.health == 0:
             self.running = False
@@ -266,6 +309,8 @@ class Game():
             self.canva.blit(platform.image, (platform.rect.x-self.offset[0], platform.rect.y-self.offset[1]))
         for enemy in self.enemy_sprites:
             self.canva.blit(enemy.image, (enemy.rect.x-self.offset[0], enemy.rect.y-self.offset[1]))
+        for item in self.item_sprites:
+            self.canva.blit(item.image, (item.rect.x-self.offset[0], item.rect.y-self.offset[1]))
         self.player.draw(self.canva, self.offset)
         self.particles.draw(self.canva)
         self.danger_zone.draw(self.canva, self.offset)
