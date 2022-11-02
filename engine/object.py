@@ -15,7 +15,7 @@ class DangerZone(pygame.sprite.Sprite):
             self.top_height = player_pos[1]
 
     def update(self, dt):
-        if self.top_height != self.pos[1]:
+        if self.top_height != self.rect[1] - self.offset_player:
             self.pos[1] += ((self.top_height - self.pos[1] + self.offset_player) / 5) * dt 
             self.rect[1] = self.pos[1]
     

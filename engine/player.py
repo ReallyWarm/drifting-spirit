@@ -294,7 +294,7 @@ class Player(pygame.sprite.Sprite):
             self.jumping = False
             self.hit_ground = True
 
-        self.pos = new_rect.topleft
+        self.pos = Vector2(new_rect.x,new_rect.y)
 
         return new_rect
 
