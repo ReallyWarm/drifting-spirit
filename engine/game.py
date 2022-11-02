@@ -24,6 +24,10 @@ class Game():
 
         self.update_surface(scale)
 
+        self.scene = [self.game_scene,self.respawn_scene]
+        self.scene_type = {'game':0,'respawn':1}
+        self.scene_id = self.scene_type['game']
+
         self.offset = [0,0]
         self.scroll_pos = [0,0]
         self.dt = 1
@@ -35,14 +39,19 @@ class Game():
         self.plat_data.add('n1b', [plat_image[3]])
         self.plat_data.add('n2b', [plat_image[0],plat_image[2]])
         self.plat_data.add('n3b', [plat_image[0],plat_image[1],plat_image[2]])
+        self.plat_data.add('e3b', [plat_image[4],plat_image[5],plat_image[6]])
 
         self.particles = ParticleList()
         self.particles.new_type('flame0',1,[1,(1,2),(250,290), 4, 0.05,(-1,-0.1),(255,120, 60), (55,25,15), True])
-        self.particles.new_type('candle',1,[1,(1,2),(250,290), 4, 0.2, (0,-15),(204,255,255), (0,20,20), False], 0)
         self.particles.new_type('spark0',1,[2,(3,4),(  0,360), 2, 0.05,     None,(200,200,100), False, False])
         self.particles.new_type('dusts0',1,[1,(2,3),(180,360), 4, 0.1 ,(0.1,0.1),(255,255,255), False, True])
+        self.particles.new_type('candle',1,[1,(5,7),(180,360), 5, 0.1, None,(204,255,255), (0,20,20), False], 0)
         self.particles.add_border(canva_size)
         self.ptc_id = 'flame0'
+
+        self.scene_ptc = ParticleList()
+        self.scene_ptc.new_type('fallexplode',1,[1,(5,7),(180,360), 5, 0.1, None,(204,255,255), (0,20,20), False], 0)
+        self.scene_ptc.new_type('respawned',1,[3,(3,3),(165,375), 2, 0.1, None,(204,255,255), None, False], 0)
 
         self.block_sprites = pygame.sprite.Group()
         self.plat_sprites = pygame.sprite.Group()
@@ -90,6 +99,10 @@ class Game():
         self.scroll_pos[0] = 0
         self.scroll_pos[1] = self.player.rect.centery - (self.canva.get_height()*3/5)
 
+        self.scene_id = self.scene_type['game']
+        self.particles.particles = []
+        self.scene_ptc.particles = []
+
         # Load level data
         self.level = list()
         level_data = gen_level('data/map.json')
@@ -121,7 +134,7 @@ class Game():
             self.make_layer(self.level[self.next_plat])
             self.next_plat -= 1
 
-        self.danger_zone = DangerZone((0,self.player.rect.bottom), (self.canva.get_width(), self.canva.get_height()//3))
+        self.danger_zone = DangerZone((0,self.player.rect.bottom), (self.canva.get_width(), self.canva.get_height()//2))
 
         self.portal = None
 
@@ -174,15 +187,12 @@ class Game():
                     self.particles.add(self.ptc_id, [(mx-self.cva_rect.x)*self.cva_scale[0], (my-self.cva_rect.y)*self.cva_scale[1]], self.dt)
 
     def update(self, event_list, dt):
-        self.dt = dt
+        self.scene[self.scene_id](event_list, dt)
+            
+    def game_scene(self, event_list, dt):
         self.input(event_list)
         self.player.input(event_list)
-        self.player.move(self.block_sprites.sprites(), self.plat_sprites.sprites(), dt)
-        self.plat_sprites.update(self.dt)
-        self.enemy_sprites.update(self.dt)
-        self.item_sprites.update(self.dt)
-        self.player.update(self.dt)
-        self.particles.update(self.dt)
+        self.scene_update(dt)
         self.scroll(self.dt)
 
         # collide enemies
@@ -293,18 +303,65 @@ class Game():
             self.portal.update(self.dt)
 
         # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()), len(self.item_sprites.sprites()))
-        print(self.score)
+        # print(self.score)
 
-        if self.player.health == 0 or self.player.rect.colliderect(self.danger_zone.rect):
+        if self.player.health == 0:
             self.running = False
+
+        if self.player.rect.bottom > self.danger_zone.rect.top + self.player.rect.height:
+            for _ in range(24):
+                self.scene_ptc.add('fallexplode', [self.player.rect.centerx, self.danger_zone.rect.top], self.dt)
+            self.scene_id = self.scene_type['respawn']
+
+    def respawn_scene(self, _, dt):
+        self.background_update(dt)
+        self.player.vfx_top.update(self.dt)
+        self.player.vfx_back.update(self.dt)
+
+        if len(self.scene_ptc.particles) == 0:
+            self.player.power_amount = self.player.power_default
+            self.player.moveL = False
+            self.player.moveR = False
+            self.player.moveU = False
+            self.player.moveD = False
+            
+            self.player.damaged = True
+            self.player.update(self.dt)
+
+            if self.player.health > 0:
+                temp_plat_pos = ((self.canva.get_width()-(3 * 32)) // 2, self.danger_zone.rect.top - self.danger_zone.offset_player % 32)
+                self.plat_sprites.add(Platform(temp_plat_pos,self.plat_data.data['e3b']))
+                self.player.pos.x = temp_plat_pos[0] + 36
+                self.player.pos.y = temp_plat_pos[1] - self.player.rect.height - self.danger_zone.offset_player % 32
+
+                for _ in range(10):
+                    self.scene_ptc.add('respawned', [self.player.pos.x+12, self.player.pos.y+24], self.dt, angle=(165,270))
+                    self.scene_ptc.add('respawned', [self.player.pos.x+12, self.player.pos.y+24], self.dt, angle=(270,375))
+                self.scene_id = self.scene_type['game']
+
+            else:
+                self.running = False
+
+    def scene_update(self, dt):
+        self.dt = dt
+        self.player.move(self.block_sprites.sprites(), self.plat_sprites.sprites(), dt)
+        self.plat_sprites.update(self.dt)
+        self.enemy_sprites.update(self.dt)
+        self.item_sprites.update(self.dt)
+        self.player.update(self.dt)
+        self.particles.update(self.dt)
+        self.scene_ptc.update(self.dt)
+
+    def background_update(self, dt):
+        self.dt = dt
+        self.plat_sprites.update(self.dt)
+        self.enemy_sprites.update(self.dt)
+        self.item_sprites.update(self.dt)
+        self.particles.update(self.dt)
+        self.scene_ptc.update(self.dt)
 
     def draw(self):
         self.canva.fill((0,0,100))
-
-        # for i in range(7):
-        #     pygame.draw.rect(self.canva, (200,155,155),pygame.Rect(32*i,100,32,32+i*10))
-        # for i in range(10):
-        #     pygame.draw.rect(self.canva, (25*i,255,255//(i+1)),pygame.Rect(224,32*i,32,32))
 
         for platform in self.plat_sprites:
             self.canva.blit(platform.image, (platform.rect.x-self.offset[0], platform.rect.y-self.offset[1]))
@@ -313,10 +370,13 @@ class Game():
         for item in self.item_sprites:
             self.canva.blit(item.image, (item.rect.x-self.offset[0], item.rect.y-self.offset[1]))
         self.player.draw(self.canva, self.offset)
-        self.particles.draw(self.canva)
+
         self.danger_zone.draw(self.canva, self.offset)
         if self.portal is not None:
             self.canva.blit(self.portal.image, (self.portal.rect.x-self.offset[0], self.portal.rect.y-self.offset[1]))
+
+        self.particles.draw(self.canva)
+        self.scene_ptc.draw(self.canva, self.offset)
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
 
@@ -328,12 +388,3 @@ class Game():
     def scroll(self, dt):
         # Lock offset Y
         self.offset[1] += ((self.player.rect.centery - self.offset[1] - (self.canva.get_height()*3/5)) / 5) * dt 
-
-        # if self.player.hit_ground:
-        #     self.scroll_pos[1] = self.player.rect.centery
-            
-        # # Lock offset Y
-        # if self.offset[1] != self.scroll_pos[1]:
-        #     self.offset[1] += ((self.scroll_pos[1] - self.offset[1] - (self.canva.get_height()*3/5)) / 10) * dt
-        # else:
-        #     s
