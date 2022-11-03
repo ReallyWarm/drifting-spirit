@@ -14,8 +14,6 @@ class Game():
         self.canva = pygame.Surface(canva_size) # 3:2
         self.cva_rect = self.canva.get_rect()
 
-        self.height_meter = 0
-
         self.normal_health = sprite_at("sprite/heart-ui.png", (0,0,32,48))
         self.regen_health = sprite_at("sprite/heart-ui.png", (32,0,32,48))
 
@@ -86,11 +84,11 @@ class Game():
     def init_level(self):
         self.running = True
         self.height_meter = 0
-        self.score = {'height':0,
-                      'enemy':{'ght':0,'imp':0},
-                      'item':{'ts1':0,'th1':0},
-                      'health':0
-                     }
+        self.score_data = { 'height':0,
+                            'enemy':{'ght':0,'imp':0},
+                            'item':{'ts1':0,'th1':0},
+                            'health':0
+                          }
 
         self.player = Player((150,320))
 
@@ -210,7 +208,7 @@ class Game():
                         self.player.damaged = True
 
             if rm_enemy:
-                self.score['enemy'][enemy.name] += 1
+                self.score_data['enemy'][enemy.name] += 1
                 self.enemy_sprites.remove(enemy)
 
         # collide items
@@ -225,7 +223,7 @@ class Game():
                             break
                 elif isinstance(item, (ItemHealth)):
                     if self.player.health + self.player.rg_health == self.player.max_health:
-                        self.score['item'][item.name] += 1
+                        self.score_data['item'][item.name] += 1
                     else:
                         for i in range(effect):
                             if self.player.health + self.player.rg_health < self.player.max_health:
@@ -234,7 +232,7 @@ class Game():
                                 break
                 elif isinstance(item, (ItemScore)):
                     for i in range(effect):
-                        self.score['item'][item.name] += 1
+                        self.score_data['item'][item.name] += 1
 
                 self.item_sprites.remove(item)
 
@@ -303,10 +301,10 @@ class Game():
             self.portal.update(self.dt)
 
         # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()), len(self.item_sprites.sprites()))
-        # print(self.score)
+        # print(self.score_data)
 
         if self.player.health == 0:
-            self.running = False
+            self.quit_game()
 
         if self.player.rect.bottom > self.danger_zone.rect.top + self.player.rect.height:
             for _ in range(24):
@@ -320,10 +318,7 @@ class Game():
 
         if len(self.scene_ptc.particles) == 0:
             self.player.power_amount = self.player.power_default
-            self.player.moveL = False
-            self.player.moveR = False
-            self.player.moveU = False
-            self.player.moveD = False
+            self.reset_player_move()
             
             self.player.damaged = True
             self.player.update(self.dt)
@@ -340,7 +335,7 @@ class Game():
                 self.scene_id = self.scene_type['game']
 
             else:
-                self.running = False
+                self.quit_game()
 
     def scene_update(self, dt):
         self.dt = dt
@@ -388,3 +383,14 @@ class Game():
     def scroll(self, dt):
         # Lock offset Y
         self.offset[1] += ((self.player.rect.centery - self.offset[1] - (self.canva.get_height()*3/5)) / 5) * dt 
+
+    def reset_player_move(self):
+        self.player.moveL = False
+        self.player.moveR = False
+        self.player.moveU = False
+        self.player.moveD = False
+
+    def quit_game(self):
+        self.running = False
+        self.score_data['height'] = self.height_meter
+        self.score_data['health'] = self.player.health
