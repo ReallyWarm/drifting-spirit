@@ -1,4 +1,4 @@
-import pygame
+import pygame, random
 from engine.graphic.spritesheet import sprite_at, load_sheet
 from engine.graphic.gameui import HealthUI, PowerUI
 from engine.graphic.particlelist import ParticleList
@@ -22,8 +22,8 @@ class Game():
 
         self.update_surface(scale)
 
-        self.scene = [self.game_scene,self.respawn_scene]
-        self.scene_type = {'game':0,'respawn':1}
+        self.scene = [self.game_scene,self.respawn_scene,self.shatter_scene]
+        self.scene_type = {'game':0,'respawn':1,'shatter':2}
         self.scene_id = self.scene_type['game']
 
         self.offset = [0,0]
@@ -44,12 +44,14 @@ class Game():
         self.particles.new_type('spark0',1,[2,(3,4),(  0,360), 2, 0.05,     None,(200,200,100), False, False])
         self.particles.new_type('dusts0',1,[1,(2,3),(180,360), 4, 0.1 ,(0.1,0.1),(255,255,255), False, True])
         self.particles.new_type('candle',1,[1,(5,7),(180,360), 5, 0.1, None,(204,255,255), (0,20,20), False], 0)
+        self.particles.new_type('damaged',1,[1,(2,3),(220,320), 3, 0.1,(-0.1,-0.2),(204,255,255), (0,20,20), True], 3)
         self.particles.add_border(canva_size)
         self.ptc_id = 'flame0'
 
         self.scene_ptc = ParticleList()
-        self.scene_ptc.new_type('fallexplode',1,[1,(5,7),(180,360), 5, 0.1, None,(204,255,255), (0,20,20), False], 0)
+        self.scene_ptc.new_type('shatter',1,[1,(4,7),(0,360), 5, 0.1, None,(204,255,255), (0,20,20), False], 0)
         self.scene_ptc.new_type('respawned',1,[3,(3,3),(165,375), 2, 0.1, None,(204,255,255), None, False], 0)
+        self.scene_ptc.new_type('smoke',1,[1,(2,3),(250,290), 4, 0.03,(-1,-0.1),(204,255,255), (0,20,20), True])
 
         self.block_sprites = pygame.sprite.Group()
         self.plat_sprites = pygame.sprite.Group()
@@ -182,7 +184,7 @@ class Game():
         if self.cva_rect.collidepoint(mx, my):
             if pygame.mouse.get_pressed()[0]:
                 for i in range(1):
-                    self.particles.add(self.ptc_id, [(mx-self.cva_rect.x)*self.cva_scale[0], (my-self.cva_rect.y)*self.cva_scale[1]], self.dt)
+                    self.particles.add(self.ptc_id, [(mx-self.cva_rect.x)*self.cva_scale[0]+self.offset[0], (my-self.cva_rect.y)*self.cva_scale[1]+self.offset[1]], self.dt)
 
     def update(self, event_list, dt):
         self.scene[self.scene_id](event_list, dt)
@@ -302,13 +304,21 @@ class Game():
 
         # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()), len(self.item_sprites.sprites()))
         # print(self.score_data)
+        if self.player.immunity:
+            self.particles.add('damaged', [random.randint(self.player.rect.left,self.player.rect.right), self.player.rect.bottom], self.dt)
 
         if self.player.health == 0:
-            self.quit_game()
+            for i in range(34):
+                self.scene_ptc.add('shatter', [self.player.rect.centerx, self.player.rect.centery], self.dt)
+                if i < 20:
+                    self.scene_ptc.add('smoke', [random.randint(self.player.rect.left,self.player.rect.right),random.randint(self.player.rect.top,self.player.rect.bottom)], self.dt)
+            self.scene_id = self.scene_type['shatter']
 
         if self.player.rect.bottom > self.danger_zone.rect.top + self.player.rect.height:
-            for _ in range(24):
-                self.scene_ptc.add('fallexplode', [self.player.rect.centerx, self.danger_zone.rect.top], self.dt)
+            for i in range(24):
+                self.scene_ptc.add('shatter', [self.player.rect.centerx, self.danger_zone.rect.top], self.dt, angle=(180,360))
+                if i < 10:
+                    self.scene_ptc.add('smoke', [random.randint(self.player.rect.left,self.player.rect.right),random.randint(self.player.rect.top,self.player.rect.bottom)], self.dt)
             self.scene_id = self.scene_type['respawn']
 
     def respawn_scene(self, _, dt):
@@ -336,6 +346,16 @@ class Game():
 
             else:
                 self.quit_game()
+
+    def shatter_scene(self, _, dt):
+        self.player.image = pygame.Surface((0,0))
+
+        self.background_update(dt)
+        self.player.vfx_top.update(self.dt)
+        self.player.vfx_back.update(self.dt)
+
+        if len(self.scene_ptc.particles) == 0:
+            self.quit_game()
 
     def scene_update(self, dt):
         self.dt = dt
@@ -370,7 +390,7 @@ class Game():
         if self.portal is not None:
             self.canva.blit(self.portal.image, (self.portal.rect.x-self.offset[0], self.portal.rect.y-self.offset[1]))
 
-        self.particles.draw(self.canva)
+        self.particles.draw(self.canva, self.offset)
         self.scene_ptc.draw(self.canva, self.offset)
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
