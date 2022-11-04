@@ -59,9 +59,9 @@ class Menu():
         self.option_menu_button.add(Button(80*sw, 360*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[2][0]}x{self.scr_option[2][1]}'))
         self.option_menu_button.add(Button(80*sw, 440*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[3][0]}x{self.scr_option[3][1]}'))
 
-        self.rank_board = pygame.Surface((700*sw,500*sh))
+        self.rank_board = pygame.Surface((600*sw,500*sh))
         self.rank_board.fill((200,155,155))
-        self.rank_board_pos = ((self.scr_size[0]-700*sw)/2,(self.scr_size[1]-400*sh)/2)
+        self.rank_board_pos = ((self.scr_size[0]-600*sw)/2,(self.scr_size[1]-400*sh)/2)
         self.set_rank_board()
 
         self.name_input = TextInput((self.scr_size[0]-240*sw)/2, 200*sh, 240*sw, 50*sh, (40,50,150), self.fontL, preview='Enter name ...', max_text=15)
@@ -77,25 +77,6 @@ class Menu():
         self.pause_menu_tint = pygame.Surface(self.scr_size, pygame.SRCALPHA)
         self.pause_menu_tint.fill((77, 77, 92))
         self.pause_menu_tint.set_alpha(120)
-
-    def set_rank_board(self):
-        self.rank_text = pygame.Surface(self.rank_board.get_size(), pygame.SRCALPHA)
-        nm_surf = self.fontL.render('Name', True, (255,255,255))
-        sc_surf = self.fontL.render('Score', True, (255,255,255))
-        self.rank_text.blit(nm_surf, nm_surf.get_rect(center=(self.rank_text.get_width()*1//3,self.rank_text.get_height()*1//7)))
-        self.rank_text.blit(sc_surf, sc_surf.get_rect(center=(self.rank_text.get_width()*2//3,self.rank_text.get_height()*1//7)))
-
-        sort_score = list()
-        for name in self.rank_data:
-            sort_score.append((name, self.rank_data[name]))
-
-        sort_score.sort(key=lambda x: x[1], reverse=True)
-        
-        for i, data in enumerate(sort_score):
-            name_surf = self.fontL.render(data[0], True, (255,255,255))
-            score_surf = self.fontL.render(f'{data[1]}', True, (255,255,255))
-            self.rank_text.blit(name_surf, name_surf.get_rect(center=(self.rank_text.get_width()*1//3,self.rank_text.get_height()*(i+2)//7)))
-            self.rank_text.blit(score_surf, score_surf.get_rect(center=(self.rank_text.get_width()*2//3,self.rank_text.get_height()*(i+2)//7)))
 
     def run_menu(self, event_list, dt):
         if self.id == 1 and self.new_game:
@@ -257,6 +238,25 @@ class Menu():
 
         self.score['all'] = self.score['height']+self.score['enemy']['ght']+self.score['enemy']['imp']+\
                             self.score['item']['ts1']+self.score['item']['th1']+self.score['health']
+
+    def set_rank_board(self):
+        self.rank_text = pygame.Surface(self.rank_board.get_size(), pygame.SRCALPHA)
+        nm_surf = self.fontL.render('Name', True, (255,255,255))
+        sc_surf = self.fontL.render('Score', True, (255,255,255))
+        self.rank_text.blit(nm_surf, nm_surf.get_rect(center=(self.rank_text.get_width()*2//7,self.rank_text.get_height()*1//7)))
+        self.rank_text.blit(sc_surf, sc_surf.get_rect(center=(self.rank_text.get_width()*5//7,self.rank_text.get_height()*1//7)))
+
+        sort_score = list()
+        for name in self.rank_data:
+            sort_score.append((name, self.rank_data[name]))
+
+        sort_score.sort(key=lambda x: x[1], reverse=True)
+        
+        for i, data in enumerate(sort_score):
+            name_surf = self.fontL.render(data[0], True, (255,255,255))
+            score_surf = self.fontL.render(f'{data[1]}', True, (255,255,255))
+            self.rank_text.blit(name_surf, name_surf.get_rect(center=(self.rank_text.get_width()*2//7,self.rank_text.get_height()*(i+2)//7)))
+            self.rank_text.blit(score_surf, score_surf.get_rect(center=(self.rank_text.get_width()*5//7,self.rank_text.get_height()*(i+2)//7)))
 
     def set_score_board(self):
         lsc = list()
