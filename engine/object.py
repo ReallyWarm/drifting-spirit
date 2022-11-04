@@ -17,7 +17,7 @@ class DangerZone(pygame.sprite.Sprite):
     def update(self, dt):
         if self.top_height != self.rect[1] - self.offset_player:
             self.pos[1] += ((self.top_height - self.pos[1] + self.offset_player) / 5) * dt 
-            self.rect[1] = self.pos[1]
+            self.rect[1] = round(self.pos[1])
     
     def draw(self, surf, offset=[0,0]):
         surf.blit(self.image, (self.rect.x-offset[0], self.rect.y-offset[1]))

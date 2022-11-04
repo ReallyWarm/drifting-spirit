@@ -45,7 +45,6 @@ class Game():
         self.particles.new_type('dusts0',1,[1,(2,3),(180,360), 4, 0.1 ,(0.1,0.1),(255,255,255), False, True])
         self.particles.new_type('candle',1,[1,(5,7),(180,360), 5, 0.1, None,(204,255,255), (0,20,20), False], 0)
         self.particles.new_type('damaged',1,[1,(2,3),(220,320), 3, 0.1,(-0.1,-0.2),(204,255,255), (0,20,20), True], 3)
-        self.particles.add_border(canva_size)
         self.ptc_id = 'flame0'
 
         self.scene_ptc = ParticleList()
@@ -304,6 +303,7 @@ class Game():
 
         # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()), len(self.item_sprites.sprites()))
         # print(self.score_data)
+        
         if self.player.immunity:
             self.particles.add('damaged', [random.randint(self.player.rect.left,self.player.rect.right), self.player.rect.bottom], self.dt)
 
