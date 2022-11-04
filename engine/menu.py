@@ -1,6 +1,7 @@
 import pygame, base64, json
 from engine.game import Game
-from engine.graphic.gameui import Button
+from engine.graphic.gameui import Button, TextInput
+from engine.graphic.spritesheet import sprite_at
 
 class Menu():
     def __init__(self, scr_id=1):
@@ -25,7 +26,7 @@ class Menu():
                 # convert to dict
                 self.rank_data = json.loads(self.rank_data)
             except json.decoder.JSONDecodeError:
-                print(1)
+                # no data
                 self.rank_data = dict()
             f.close()
 
@@ -58,8 +59,17 @@ class Menu():
         self.option_menu_button.add(Button(80*sw, 360*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[2][0]}x{self.scr_option[2][1]}'))
         self.option_menu_button.add(Button(80*sw, 440*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[3][0]}x{self.scr_option[3][1]}'))
 
-        self.rank_board = pygame.Surface((760*sw,600*sh))
+        self.rank_board = pygame.Surface((700*sw,500*sh))
         self.rank_board.fill((200,155,155))
+        self.rank_board_pos = ((self.scr_size[0]-700*sw)/2,(self.scr_size[1]-400*sh)/2)
+        self.set_rank_board()
+
+        self.name_input = TextInput((self.scr_size[0]-240*sw)/2, 200*sh, 240*sw, 50*sh, (40,50,150), self.fontL, preview='Enter name ...', max_text=15)
+        self.done_input = Button((self.scr_size[0]-150*sw)/2, 700*sh, 150*sw, 50*sh, (40,50,150), self.fontL, 'Done')
+        self.score_board = pygame.Surface((500*sw,400*sh))
+        self.score_board.fill((200,155,155))
+        self.score_board_pos = ((self.scr_size[0]-500*sw)/2,275*sh)
+        self.set_score_icon(self.scale)
 
         self.pause_menu_button.empty()
         self.pause_menu_button.add(Button(self.scr_size[0]//2 - 75*sw, 200*sh, 150*sw, 50*sh, (40,50,150), self.fontL, 'Resume'))
@@ -67,6 +77,25 @@ class Menu():
         self.pause_menu_tint = pygame.Surface(self.scr_size, pygame.SRCALPHA)
         self.pause_menu_tint.fill((77, 77, 92))
         self.pause_menu_tint.set_alpha(120)
+
+    def set_rank_board(self):
+        self.rank_text = pygame.Surface(self.rank_board.get_size(), pygame.SRCALPHA)
+        nm_surf = self.fontL.render('Name', True, (255,255,255))
+        sc_surf = self.fontL.render('Score', True, (255,255,255))
+        self.rank_text.blit(nm_surf, nm_surf.get_rect(center=(self.rank_text.get_width()*1//3,self.rank_text.get_height()*1//7)))
+        self.rank_text.blit(sc_surf, sc_surf.get_rect(center=(self.rank_text.get_width()*2//3,self.rank_text.get_height()*1//7)))
+
+        sort_score = list()
+        for name in self.rank_data:
+            sort_score.append((name, self.rank_data[name]))
+
+        sort_score.sort(key=lambda x: x[1], reverse=True)
+        
+        for i, data in enumerate(sort_score):
+            name_surf = self.fontL.render(data[0], True, (255,255,255))
+            score_surf = self.fontL.render(f'{data[1]}', True, (255,255,255))
+            self.rank_text.blit(name_surf, name_surf.get_rect(center=(self.rank_text.get_width()*1//3,self.rank_text.get_height()*(i+2)//7)))
+            self.rank_text.blit(score_surf, score_surf.get_rect(center=(self.rank_text.get_width()*2//3,self.rank_text.get_height()*(i+2)//7)))
 
     def run_menu(self, event_list, dt):
         if self.id == 1 and self.new_game:
@@ -105,6 +134,7 @@ class Menu():
 
             if not self.game.running:
                 self.calculate_score()
+                self.set_score_board()
                 self.id = 4
                 self.new_game = True
             
@@ -117,7 +147,6 @@ class Menu():
             self.back_button.draw(self.screen)
 
     def rank_menu(self, event_list, _):
-        sw, sh = self.scale
         self.back_button.update(event_list)
 
         if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked():
@@ -125,7 +154,8 @@ class Menu():
             
         self.screen.fill((200,220,255))
         self.back_button.draw(self.screen)
-        self.screen.blit(self.rank_board, ((self.scr_size[0]-760*sw)/2,(self.scr_size[1]-600*sh)/2))
+        self.screen.blit(self.rank_board, self.rank_board_pos)
+        self.screen.blit(self.rank_text, self.rank_board_pos)
 
     def option_menu(self, event_list, _):
         self.back_button.update(event_list)
@@ -147,23 +177,31 @@ class Menu():
         self.back_button.draw(self.screen)
         self.option_menu_button.draw(self.screen)
 
-    def score_menu(self, event_list, _):
-        self.back_button.update(event_list)
+    def score_menu(self, event_list, dt):
+        self.done_input.update(event_list)
+        self.name_input.update(event_list)
 
-        if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked():
+        if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.done_input.get_clicked():
             self.id = 0
 
-            anyms_c = 1
-            for name in self.rank_data:
-                if name.startswith('anonymous') and anyms_c < 5:
+            this_name = self.name_input.get_input()
+            if not this_name:
+                anyms_c = 0
+                for name in self.rank_data:
+                    if name.startswith('anonymous') and anyms_c < 5:
+                        anyms_c += 1
+                if anyms_c == 0:
                     anyms_c += 1
+                this_name = f'anonymous{anyms_c}'
 
-            if self.rank_data[f'anonymous{anyms_c}'] < self.score['all']:
-                self.rank_data[f'anonymous{anyms_c}'] = self.score['all']
+            if this_name in self.rank_data:
+                if self.rank_data[this_name] < self.score['all']:
+                    self.rank_data[this_name] = self.score['all']
+            else:
+                self.rank_data[this_name] = self.score['all']
 
             while len(self.rank_data) > 5:
                 rm_name = min(self.rank_data, key=self.rank_data.get)
-                print(rm_name)
                 self.rank_data.pop(rm_name)
 
             with open('data/rank.json', 'w') as f:
@@ -176,10 +214,13 @@ class Menu():
                 json.dump(data, f)
                 f.close()
 
-            print(self.rank_data)
+            self.set_rank_board()
 
         self.screen.fill((100,220,155))
-        self.back_button.draw(self.screen)
+        self.screen.blit(self.score_board, self.score_board_pos)
+        self.screen.blit(self.score_text, self.score_board_pos)
+        self.name_input.draw(self.screen)
+        self.done_input.draw(self.screen)
 
     def pause_menu(self, event_list):
         self.pause_menu_button.update(event_list)
@@ -191,6 +232,7 @@ class Menu():
                 if i == 1:
                     self.game.quit_game()
                     self.calculate_score()
+                    self.set_score_board()
                     self.id = 4
                     self.new_game = True
                 self.pause = False
@@ -200,7 +242,7 @@ class Menu():
 
     def calculate_score(self):
         score_data = self.game.score_data
-
+        
         self.score['height'] = int(score_data['height'] * 0.7)
         self.score['enemy'] = dict()
         self.score['enemy']['ght'] = score_data['enemy']['ght'] * 100
@@ -216,4 +258,38 @@ class Menu():
         self.score['all'] = self.score['height']+self.score['enemy']['ght']+self.score['enemy']['imp']+\
                             self.score['item']['ts1']+self.score['item']['th1']+self.score['health']
 
-        print(self.score)
+    def set_score_board(self):
+        lsc = list()
+        lsc.append(('Height',self.score['height']))
+        lsc.append(('Ghost',self.score['enemy']['ght']))
+        lsc.append(('Imp',self.score['enemy']['imp']))
+        lsc.append(('Score Item',self.score['item']['ts1']))
+        lsc.append(('Over Heal',self.score['item']['th1']))
+        lsc.append(('Bonus',self.score['health']))
+        lsc.append(('Total Score',self.score['all']))
+
+        self.score_text = pygame.Surface(self.score_board.get_size(), pygame.SRCALPHA)
+        nm_surf = self.fontL.render('Type', True, (255,255,255))
+        sc_surf = self.fontL.render('Score', True, (255,255,255))
+        self.score_text.blit(nm_surf, nm_surf.get_rect(center=(self.score_text.get_width()*2//10,self.score_text.get_height()*1//9)))
+        self.score_text.blit(sc_surf, sc_surf.get_rect(center=(self.score_text.get_width()*8//10,self.score_text.get_height()*1//9)))
+
+        for i, data in enumerate(lsc):
+            image_surf = self.iscore[i]
+            text_surf = self.fontM.render(data[0], True, (255,255,255))
+            score_surf = self.fontM.render(f'{data[1]}', True, (255,255,255))
+            self.score_text.blit(image_surf, image_surf.get_rect(center=(self.score_text.get_width()*2//10,self.score_text.get_height()*(i+2)//9)))
+            self.score_text.blit(text_surf, text_surf.get_rect(midleft=(self.score_text.get_width()*2.5//10,self.score_text.get_height()*(i+2)//9)))
+            self.score_text.blit(score_surf, score_surf.get_rect(center=(self.score_text.get_width()*8//10,self.score_text.get_height()*(i+2)//9)))
+
+    def set_score_icon(self, scale):
+        sw, sh = scale
+        self.iscore = list()
+        pygame.transform.set_smoothscale_backend
+        self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/platform.png", (96,0,32,16)), (32*sw,16*sh)))
+        self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/ghost-idle.png", (0,0,32,32)), (32*sw,32*sh)))
+        self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/imp-idle.png", (0,0,32,32)), (32*sw,32*sh)))
+        self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/spirit-item.png",(0,48,24,24)), (32*sw,32*sh)))
+        self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/spirit-item.png",(0,24,24,24)), (32*sw,32*sh)))
+        self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/heart-ui.png", (0,0,32,48)), (22*sw,32*sh)))
+        self.iscore.append(pygame.Surface((32,32), pygame.SRCALPHA))
