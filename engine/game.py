@@ -7,6 +7,7 @@ from engine.enemy import Ghost, Imp
 from engine.item import ItemDash, ItemHealth, ItemScore
 from engine.player import Player
 from engine.object import DangerZone, Portal
+from engine.bullet import BulletList
 from engine.genlevel import gen_level
 
 class Game():
@@ -26,6 +27,8 @@ class Game():
         self.scene_type = {'game':0,'respawn':1,'shatter':2}
         self.scene_id = self.scene_type['game']
 
+        self.bullets = BulletList(image=pygame.image.load("sprite/bullet.png").convert_alpha())
+
         self.offset = [0,0]
         self.scroll_pos = [0,0]
         self.dt = 1
@@ -40,8 +43,9 @@ class Game():
         self.plat_data.add('e3b', [plat_image[4],plat_image[5],plat_image[6]])
 
         self.particles = ParticleList()
-        self.particles.new_type('flame0',1,[1,(1,2),(250,290), 4, 0.05,(-1,-0.1),(255,120, 60), (55,25,15), True])
-        self.particles.new_type('spark0',1,[2,(3,4),(  0,360), 2, 0.05,     None,(200,200,100), False, False])
+        self.particles.new_type('jump',1,[1,(2,3),(240,300),3,0.1,(0,0.1),(255,255,255),None,False],0)
+        self.particles.new_type('kill',1,[2,(7,9),(0,360),2,0.3,None,(204,255,255),False,False])
+        self.particles.new_type('vanish',1,[1,(1,3),(0,360),3,0.05,None,(204,255,255),(0,20,20),False], 0)
         self.particles.new_type('dusts0',1,[1,(2,3),(180,360), 4, 0.1 ,(0.1,0.1),(255,255,255), False, True])
         self.particles.new_type('candle',1,[1,(5,7),(180,360), 5, 0.1, None,(204,255,255), (0,20,20), False], 0)
         self.particles.new_type('damaged',1,[1,(2,3),(220,320), 3, 0.1,(-0.1,-0.2),(204,255,255), (0,20,20), True], 3)
@@ -72,7 +76,7 @@ class Game():
         
         sw, sh = self.win_scale
 
-        self.font = pygame.font.SysFont(None, int(30*sh))
+        self.font = pygame.font.Font('data/ARCADEPI.TTF', int(20*sh))
 
         self.height_rect = pygame.Rect(30*sw, 30*sh, 200*sw, 50*sh)
 
@@ -101,6 +105,7 @@ class Game():
         self.scene_id = self.scene_type['game']
         self.particles.particles = []
         self.scene_ptc.particles = []
+        self.bullets.bullets = []
 
         # Load level data
         self.level = list()
@@ -167,23 +172,24 @@ class Game():
                 self.portal = data
 
     def input(self, event_list):
-        mx, my = pygame.mouse.get_pos()
-        for event in event_list:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_q:
-                    self.ptc_id = 'flame0'
-                if event.key == pygame.K_w:
-                    self.ptc_id = 'spark0'
-                if event.key == pygame.K_e:
-                    self.ptc_id = 'dusts0'
-                if event.key == pygame.K_r:
-                    self.ptc_id = 'candle'
+        pass
+        # mx, my = pygame.mouse.get_pos()
+        # for event in event_list:
+        #     if event.type == pygame.KEYDOWN:
+        #         if event.key == pygame.K_q:
+        #             self.ptc_id = 'flame0'
+        #         if event.key == pygame.K_w:
+        #             self.ptc_id = 'spark0'
+        #         if event.key == pygame.K_e:
+        #             self.ptc_id = 'dusts0'
+        #         if event.key == pygame.K_r:
+        #             self.ptc_id = 'candle'
 
             
-        if self.cva_rect.collidepoint(mx, my):
-            if pygame.mouse.get_pressed()[0]:
-                for i in range(1):
-                    self.particles.add(self.ptc_id, [(mx-self.cva_rect.x)*self.cva_scale[0]+self.offset[0], (my-self.cva_rect.y)*self.cva_scale[1]+self.offset[1]], self.dt)
+        # if self.cva_rect.collidepoint(mx, my):
+        #     if pygame.mouse.get_pressed()[0]:
+        #         for i in range(1):
+        #             self.particles.add(self.ptc_id, [(mx-self.cva_rect.x)*self.cva_scale[0]+self.offset[0], (my-self.cva_rect.y)*self.cva_scale[1]+self.offset[1]], self.dt)
 
     def update(self, event_list, dt):
         self.scene[self.scene_id](event_list, dt)
@@ -194,23 +200,39 @@ class Game():
         self.scene_update(dt)
         self.scroll(self.dt)
 
-        # collide enemies
+        # update and collide enemies
         for enemy in self.enemy_sprites.sprites():
             rm_enemy = False
+            enemy.attack(self.bullets, self.dt, stop_attack=False)
             if enemy.hitbox.colliderect(self.player.rect):
                 if self.player.dashing:
                     rm_enemy = True
                 elif not self.player.immunity:
                     if self.player.vel.y > 0:
                         if self.player.rect.bottom <= enemy.rect.centery or self.player.vel.y > enemy.rect.height // 2:
-                            self.player.vel.y = -5
+                            self.player.vel.y = -5 * self.dt
                             rm_enemy = True
                     else:
                         self.player.damaged = True
-
+            # Remove enemy with effect
             if rm_enemy:
+                # Particle
+                if self.player.dashing:
+                    angle = (260,280) if self.player.dash_direct == 1 else (80,100) if self.player.dash_direct == 2 else (350,370) if self.player.dash_direct == 3 else (170,190)
+                else:
+                    angle = (80,100)
+                for i in range(8):
+                    if i < 4:
+                        self.particles.add('kill', [enemy.rect.centerx, enemy.rect.centery], self.dt, angle=angle)
+                    self.particles.add('vanish', [enemy.rect.centerx, enemy.rect.centery], self.dt)
+
                 self.score_data['enemy'][enemy.name] += 1
                 self.enemy_sprites.remove(enemy)
+
+        
+        if self.bullets.get_collide() == Player:
+            if not self.player.immunity and not self.player.dashing:
+                self.player.damaged = True
 
         # collide items
         for item in self.item_sprites.sprites():
@@ -236,44 +258,6 @@ class Game():
                         self.score_data['item'][item.name] += 1
 
                 self.item_sprites.remove(item)
-
-        # update UI
-        current_height = (self.canva.get_height() - self.player.rect.bottom) * 10 // 32
-        if current_height > self.height_meter:
-            self.height_meter = current_height
-
-        self.height_text = self.font.render(f'Height : {self.height_meter}', True, (0,0,0))
-
-        self.health_ui_sprites.update(self.player)
-        self.power_ui_sprites.update(self.player)
-        # Add regen health UI
-        for i in range(self.health_index, self.player.health + self.player.rg_health):
-            rect = self.health_rect.copy()
-            rect.x += self.health_offset[0] * i
-            self.health_index += 1
-            self.health_ui_sprites.add(HealthUI(self.health_index, rect, self.regen_health))
-        # Add extra power UI
-        for i in range(self.power_index, self.player.power_amount):
-            rect = self.power_rect.copy()
-            rect.top -= self.power_offset[1] * i
-            self.power_index += 1
-            self.power_ui_sprites.add(PowerUI(2, self.power_index, rect, self.extra_power))
-        # Remove health UI
-        for health_ui in self.health_ui_sprites.sprites():
-            if not health_ui.show:
-                self.health_ui_sprites.remove(health_ui)
-                self.health_index -= 1
-        # Remove extra power UI
-        for power_ui in self.power_ui_sprites.sprites():
-            if power_ui.type == 2 and not power_ui.recharge:
-                self.power_ui_sprites.remove(power_ui)
-                self.power_index -= 1
-
-        # for i in self.power_ui_sprites.sprites():
-        #     print(i.pos, end=" ")
-        # print(self.player.power_amount)
-        # print(len(self.health_ui_sprites.sprites()), self.player.health, self.player.rg_health)
-        # print(self.height_meter)
 
         # Level loading
         top_plat = 320
@@ -301,12 +285,14 @@ class Game():
         if self.portal is not None:
             self.portal.update(self.dt)
 
-        # print(len(self.enemy_sprites.sprites()), len(self.plat_sprites.sprites()), len(self.item_sprites.sprites()))
-        # print(self.score_data)
-        
+        # Other game particles
         if self.player.immunity:
             self.particles.add('damaged', [random.randint(self.player.rect.left,self.player.rect.right), self.player.rect.bottom], self.dt)
+        if self.player.jumped and self.player.jump_time[0] == 1:
+            for _ in range(6):
+                self.particles.add('jump', [random.randint(self.player.rect.centerx-self.player.rect.w//4,self.player.rect.centerx+self.player.rect.w//4), self.player.rect.bottom], self.dt)
 
+        # Scene change
         if self.player.health == 0:
             for i in range(34):
                 self.scene_ptc.add('shatter', [self.player.rect.centerx, self.player.rect.centery], self.dt)
@@ -320,6 +306,41 @@ class Game():
                 if i < 10:
                     self.scene_ptc.add('smoke', [random.randint(self.player.rect.left,self.player.rect.right),random.randint(self.player.rect.top,self.player.rect.bottom)], self.dt)
             self.scene_id = self.scene_type['respawn']
+            self.player.damaged = True
+            self.player.update(self.dt)
+
+    def ui_update(self):
+        # update UI
+        current_height = (self.canva.get_height() - self.player.rect.bottom) * 10 // 32
+        if current_height > self.height_meter:
+            self.height_meter = current_height
+
+        self.height_text = self.font.render(f'Height : {self.height_meter}', True, (255,255,255))
+
+        self.health_ui_sprites.update(self.player)
+        self.power_ui_sprites.update(self.player)
+        # Add regen health UI
+        for i in range(self.health_index, self.player.health + self.player.rg_health):
+            rect = self.health_rect.copy()
+            rect.x += self.health_offset[0] * i
+            self.health_index += 1
+            self.health_ui_sprites.add(HealthUI(self.health_index, rect, self.regen_health))
+        # Add extra power UI
+        for i in range(self.power_index, self.player.power_amount):
+            rect = self.power_rect.copy()
+            rect.top -= self.power_offset[1] * i
+            self.power_index += 1
+            self.power_ui_sprites.add(PowerUI(2, self.power_index, rect, self.extra_power))
+        # Remove health UI
+        for health_ui in self.health_ui_sprites.sprites():
+            if not health_ui.show:
+                self.health_ui_sprites.remove(health_ui)
+                self.health_index -= 1
+        # Remove extra power UI
+        for power_ui in self.power_ui_sprites.sprites():
+            if power_ui.type == 2 and not power_ui.recharge:
+                self.power_ui_sprites.remove(power_ui)
+                self.power_index -= 1
 
     def respawn_scene(self, _, dt):
         self.background_update(dt)
@@ -329,9 +350,6 @@ class Game():
         if len(self.scene_ptc.particles) == 0:
             self.player.power_amount = self.player.power_default
             self.reset_player_move()
-            
-            self.player.damaged = True
-            self.player.update(self.dt)
 
             if self.player.health > 0:
                 temp_plat_pos = ((self.canva.get_width()-(3 * 32)) // 2, self.danger_zone.rect.top - self.danger_zone.offset_player % 32)
@@ -364,16 +382,20 @@ class Game():
         self.enemy_sprites.update(self.dt)
         self.item_sprites.update(self.dt)
         self.player.update(self.dt)
+        self.bullets.update(self.dt, [self.player,self.danger_zone])
         self.particles.update(self.dt)
         self.scene_ptc.update(self.dt)
+        self.ui_update()
 
     def background_update(self, dt):
         self.dt = dt
         self.plat_sprites.update(self.dt)
         self.enemy_sprites.update(self.dt)
         self.item_sprites.update(self.dt)
+        self.bullets.update(1, [self.danger_zone])
         self.particles.update(self.dt)
         self.scene_ptc.update(self.dt)
+        self.ui_update()
 
     def draw(self):
         self.canva.fill((0,0,100))
@@ -392,11 +414,13 @@ class Game():
 
         self.particles.draw(self.canva, self.offset)
         self.scene_ptc.draw(self.canva, self.offset)
+        self.bullets.draw(self.canva, self.offset)
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
 
-        pygame.draw.rect(self.screen, (255,255,255),self.height_rect)
-        self.screen.blit(self.height_text, self.height_text.get_rect(midleft=(self.height_rect.x+self.height_rect.width//10, self.height_rect.y+self.height_rect.height//2)))
+        pygame.draw.rect(self.screen, (40,50,150),self.height_rect)
+        pygame.draw.rect(self.screen, (80,90,190), self.height_rect,4)
+        self.screen.blit(self.height_text, self.height_text.get_rect(midleft=(self.height_rect.x+self.height_rect.width//15, self.height_rect.y+self.height_rect.height//2)))
         self.health_ui_sprites.draw(self.screen)
         self.power_ui_sprites.draw(self.screen)
 
@@ -413,4 +437,7 @@ class Game():
     def quit_game(self):
         self.running = False
         self.score_data['height'] = self.height_meter
-        self.score_data['health'] = self.player.health
+        if self.height_meter > 1000:
+            self.score_data['health'] = self.player.health
+        else:
+            self.score_data['health'] = 0

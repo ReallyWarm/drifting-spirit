@@ -4,7 +4,7 @@ from engine.graphic.gameui import Button, TextInput
 from engine.graphic.spritesheet import sprite_at
 
 class Menu():
-    def __init__(self, scr_id=1):
+    def __init__(self, scr_id=1, fps_id=2):
         self.scr_option = [(1440,960),(1200,800),(960,640),(720,480)] # 3:2
         self.scr_id = scr_id
 
@@ -13,6 +13,8 @@ class Menu():
         self.screen = pygame.display.set_mode(self.scr_size, 0, 32)
         self.scale = (1,1)
 
+        self.fps_option = [30, 45, 60]
+        self.fps_id = fps_id
         self.current_menu = [self.main_menu, self.game_loop, self.rank_menu, self.option_menu, self.score_menu]
         self.id = 0
         self.pause = False
@@ -42,10 +44,12 @@ class Menu():
 
     def set_menu(self):
         sw, sh = self.scale
-        self.fontL = pygame.font.SysFont(None, int(30*sh))
-        self.fontM = pygame.font.SysFont(None, int(25*sh))
+        self.fontT = pygame.font.Font('data/ARCADEPI.TTF', int(60*sh))
+        self.fontH = pygame.font.Font('data/ARCADEPI.TTF', int(40*sh))
+        self.fontL = pygame.font.Font('data/ARCADEPI.TTF', int(25*sh))
+        self.fontM = pygame.font.Font('data/ARCADEPI.TTF', int(20*sh))
 
-        self.back_button = Button(self.scr_size[0] - 80*sw, 30*sh, 50*sw, 50*sh, (200,155,155), self.fontL, '->')
+        self.back_button = Button(self.scr_size[0] - 80*sw, 30*sh, 50*sw, 50*sh, (40,50,150), self.fontL, '->')
 
         self.main_menu_button.empty()
         self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 370*sh, 200*sw, 50*sh, (40,50,150), self.fontL, 'Play'))
@@ -54,29 +58,57 @@ class Menu():
         self.main_menu_button.add(Button(80*sw, self.scr_size[1] - 130*sh, 200*sw, 50*sh, (40,50,150), self.fontL, 'Exit'))
 
         self.option_menu_button.empty()
-        self.option_menu_button.add(Button(80*sw, 200*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[0][0]}x{self.scr_option[0][1]}'))
-        self.option_menu_button.add(Button(80*sw, 280*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[1][0]}x{self.scr_option[1][1]}'))
-        self.option_menu_button.add(Button(80*sw, 360*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[2][0]}x{self.scr_option[2][1]}'))
-        self.option_menu_button.add(Button(80*sw, 440*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[3][0]}x{self.scr_option[3][1]}'))
+        self.option_menu_button.add(Button(80*sw, 140*sh, 200*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[0][0]}x{self.scr_option[0][1]}'))
+        self.option_menu_button.add(Button(80*sw, 210*sh, 200*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[1][0]}x{self.scr_option[1][1]}'))
+        self.option_menu_button.add(Button(80*sw, 280*sh, 200*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[2][0]}x{self.scr_option[2][1]}'))
+        self.option_menu_button.add(Button(80*sw, 350*sh, 200*sw, 50*sh, (40,50,150), self.fontM, f'{self.scr_option[3][0]}x{self.scr_option[3][1]}'))
+        self.option_menu_button.add(Button(80*sw, 560*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.fps_option[0]}'))
+        self.option_menu_button.add(Button(220*sw, 560*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.fps_option[1]}'))
+        self.option_menu_button.add(Button(360*sw, 560*sh, 100*sw, 50*sh, (40,50,150), self.fontM, f'{self.fps_option[2]}'))
+        res_title_text = self.fontT.render('DISPLAY', True, (255,255,255))
+        self.res_title = pygame.Surface((res_title_text.get_width()+20*sw,res_title_text.get_height()+10*sh))
+        self.res_title.fill((40,50,150))
+        self.res_title.blit(res_title_text, self.res_title.get_rect(center=(self.res_title.get_width()//2+12*sw,self.res_title.get_height()//2+8*sh)))
+        self.res_title_rect = self.res_title.get_rect(midleft=(80*sw,80*sh))
+        fps_title_text = self.fontT.render('FPS', True, (255,255,255))
+        self.fps_title = pygame.Surface((fps_title_text.get_width()+20*sw,fps_title_text.get_height()+10*sh))
+        self.fps_title.fill((40,50,150))
+        self.fps_title.blit(fps_title_text, self.fps_title.get_rect(center=(self.fps_title.get_width()//2+12*sw,self.fps_title.get_height()//2+8*sh)))
+        self.fps_title_rect = self.fps_title.get_rect(midleft=(80*sw,500*sh))
 
+        rank_title_text = self.fontT.render('RANKING', True, (255,255,255))
+        self.rank_title = pygame.Surface((rank_title_text.get_width()+20*sw,rank_title_text.get_height()+10*sh))
+        self.rank_title.fill((205,125,50))
+        self.rank_title.blit(rank_title_text, self.rank_title.get_rect(center=(self.rank_title.get_width()//2+12*sw,self.rank_title.get_height()//2+8*sh)))
+        self.rank_title_rect = self.rank_title.get_rect(center=(self.scr_size[0]/2,(self.scr_size[1]-550*sh)/2))
         self.rank_board = pygame.Surface((600*sw,500*sh))
-        self.rank_board.fill((200,155,155))
+        self.rank_board.fill((205,125,50))
+        pygame.draw.rect(self.rank_board, (185,78,0),self.rank_board.get_rect(topleft=(0,0)), 8)
         self.rank_board_pos = ((self.scr_size[0]-600*sw)/2,(self.scr_size[1]-400*sh)/2)
         self.set_rank_board()
 
-        self.name_input = TextInput((self.scr_size[0]-240*sw)/2, 200*sh, 240*sw, 50*sh, (40,50,150), self.fontL, preview='Enter name ...', max_text=15)
+        score_title_text = self.fontT.render('NEW SCORE', True, (255,255,255))
+        self.score_title = pygame.Surface((score_title_text.get_width()+20*sw,score_title_text.get_height()+10*sh))
+        self.score_title.fill((40,50,150))
+        self.score_title.blit(score_title_text, self.score_title.get_rect(center=(self.score_title.get_width()//2+12*sw,self.score_title.get_height()//2+8*sh)))
+        self.score_title_rect = self.score_title.get_rect(center=(self.scr_size[0]/2,(250*sh)/2))
+        self.name_input = TextInput((self.scr_size[0]-240*sw)/2, 200*sh, 240*sw, 50*sh, (40,50,150), self.fontM, preview='Enter name ...', max_text=14)
         self.done_input = Button((self.scr_size[0]-150*sw)/2, 700*sh, 150*sw, 50*sh, (40,50,150), self.fontL, 'Done')
-        self.score_board = pygame.Surface((500*sw,400*sh))
-        self.score_board.fill((200,155,155))
-        self.score_board_pos = ((self.scr_size[0]-500*sw)/2,275*sh)
+        self.score_board = pygame.Surface((650*sw,400*sh))
+        self.score_board.fill((40,50,150))
+        pygame.draw.rect(self.score_board, (80,90,190),self.score_board.get_rect(topleft=(0,0)), 8)
+        self.score_board_pos = ((self.scr_size[0]-650*sw)/2,275*sh)
         self.set_score_icon(self.scale)
 
         self.pause_menu_button.empty()
-        self.pause_menu_button.add(Button(self.scr_size[0]//2 - 75*sw, 200*sh, 150*sw, 50*sh, (40,50,150), self.fontL, 'Resume'))
-        self.pause_menu_button.add(Button(self.scr_size[0]//2 - 75*sw, 280*sh, 150*sw, 50*sh, (40,50,150), self.fontL, 'Back to Title'))
+        self.pause_menu_button.add(Button(self.scr_size[0]//2 - 75*sw, 200*sh, 250*sw, 50*sh, (40,50,150), self.fontL, 'Resume'))
+        self.pause_menu_button.add(Button(self.scr_size[0]//2 - 75*sw, 280*sh, 250*sw, 50*sh, (40,50,150), self.fontL, 'Back to Title'))
         self.pause_menu_tint = pygame.Surface(self.scr_size, pygame.SRCALPHA)
         self.pause_menu_tint.fill((77, 77, 92))
         self.pause_menu_tint.set_alpha(120)
+
+    def get_fps(self):
+        return self.fps_option[self.fps_id]
 
     def run_menu(self, event_list, dt):
         if self.id == 1 and self.new_game:
@@ -137,6 +169,7 @@ class Menu():
         self.back_button.draw(self.screen)
         self.screen.blit(self.rank_board, self.rank_board_pos)
         self.screen.blit(self.rank_text, self.rank_board_pos)
+        self.screen.blit(self.rank_title, self.rank_title_rect)
 
     def option_menu(self, event_list, _):
         self.back_button.update(event_list)
@@ -147,14 +180,19 @@ class Menu():
 
         for i, button in enumerate(self.option_menu_button.sprites()):
             if button.get_clicked():
-                self.scr_id = i
-                self.scr_size = self.scr_option[self.scr_id]
-                self.scale = (self.scr_size[0] / self.scr_default[0], self.scr_size[1] / self.scr_default[1])
-                self.screen = pygame.display.set_mode(self.scr_size, 0, 32)
-                self.set_menu()
-                self.game.update_surface(self.scale)
+                if i < 4:
+                    self.scr_id = i
+                    self.scr_size = self.scr_option[self.scr_id]
+                    self.scale = (self.scr_size[0] / self.scr_default[0], self.scr_size[1] / self.scr_default[1])
+                    self.screen = pygame.display.set_mode(self.scr_size, 0, 32)
+                    self.set_menu()
+                    self.game.update_surface(self.scale)
+                elif i < 7:
+                    self.fps_id = i - 4
   
         self.screen.fill((100,220,155))
+        self.screen.blit(self.res_title, self.res_title_rect)
+        self.screen.blit(self.fps_title, self.fps_title_rect)
         self.back_button.draw(self.screen)
         self.option_menu_button.draw(self.screen)
 
@@ -200,6 +238,7 @@ class Menu():
         self.screen.fill((100,220,155))
         self.screen.blit(self.score_board, self.score_board_pos)
         self.screen.blit(self.score_text, self.score_board_pos)
+        self.screen.blit(self.score_title, self.score_title_rect)
         self.name_input.draw(self.screen)
         self.done_input.draw(self.screen)
 
@@ -241,8 +280,8 @@ class Menu():
 
     def set_rank_board(self):
         self.rank_text = pygame.Surface(self.rank_board.get_size(), pygame.SRCALPHA)
-        nm_surf = self.fontL.render('Name', True, (255,255,255))
-        sc_surf = self.fontL.render('Score', True, (255,255,255))
+        nm_surf = self.fontH.render('NAME', True, (255,255,255))
+        sc_surf = self.fontH.render('SCORE', True, (255,255,255))
         self.rank_text.blit(nm_surf, nm_surf.get_rect(center=(self.rank_text.get_width()*2//7,self.rank_text.get_height()*1//7)))
         self.rank_text.blit(sc_surf, sc_surf.get_rect(center=(self.rank_text.get_width()*5//7,self.rank_text.get_height()*1//7)))
 
@@ -269,17 +308,17 @@ class Menu():
         lsc.append(('Total Score',self.score['all']))
 
         self.score_text = pygame.Surface(self.score_board.get_size(), pygame.SRCALPHA)
-        nm_surf = self.fontL.render('Type', True, (255,255,255))
-        sc_surf = self.fontL.render('Score', True, (255,255,255))
-        self.score_text.blit(nm_surf, nm_surf.get_rect(center=(self.score_text.get_width()*2//10,self.score_text.get_height()*1//9)))
+        nm_surf = self.fontH.render('TYPE', True, (255,255,255))
+        sc_surf = self.fontH.render('SCORE', True, (255,255,255))
+        self.score_text.blit(nm_surf, nm_surf.get_rect(midleft=(self.score_text.get_width()//10,self.score_text.get_height()*1//9)))
         self.score_text.blit(sc_surf, sc_surf.get_rect(center=(self.score_text.get_width()*8//10,self.score_text.get_height()*1//9)))
 
         for i, data in enumerate(lsc):
             image_surf = self.iscore[i]
             text_surf = self.fontM.render(data[0], True, (255,255,255))
             score_surf = self.fontM.render(f'{data[1]}', True, (255,255,255))
-            self.score_text.blit(image_surf, image_surf.get_rect(center=(self.score_text.get_width()*2//10,self.score_text.get_height()*(i+2)//9)))
-            self.score_text.blit(text_surf, text_surf.get_rect(midleft=(self.score_text.get_width()*2.5//10,self.score_text.get_height()*(i+2)//9)))
+            self.score_text.blit(image_surf, image_surf.get_rect(center=(self.score_text.get_width()//10,self.score_text.get_height()*(i+2)//9)))
+            self.score_text.blit(text_surf, text_surf.get_rect(midleft=(self.score_text.get_width()*2//10,self.score_text.get_height()*(i+2)//9)))
             self.score_text.blit(score_surf, score_surf.get_rect(center=(self.score_text.get_width()*8//10,self.score_text.get_height()*(i+2)//9)))
 
     def set_score_icon(self, scale):
