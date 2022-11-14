@@ -13,15 +13,17 @@ class Button(pygame.sprite.Sprite):
         text_surf = font.render(text, True, (255,255,255))
 
         self.normal_img = pygame.Surface((width,height))
+        self.rect = self.normal_img.get_rect(topleft=(x, y))
+
         self.normal_img.fill(color)
         self.normal_img.blit(text_surf, text_surf.get_rect(center=(width//2,height//2)))
+        border_color = (max(color[0]-80,0), max(color[1]-80,0), max(color[2]-80,0))
+        pygame.draw.rect(self.normal_img, border_color, pygame.Rect(0,0,width,height),4)
         
         self.hover_img = self.normal_img.copy()
         self.overlay = pygame.Surface((width,height))
         self.overlay.fill((50,50,50))
         self.hover_img.blit(self.overlay, (0,0), special_flags=pygame.BLEND_RGB_ADD)
-        
-        self.rect = self.normal_img.get_rect(topleft=(x, y))
 
     def get_clicked(self):
         click = self.clicked

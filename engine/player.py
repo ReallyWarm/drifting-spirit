@@ -21,10 +21,10 @@ class Player(pygame.sprite.Sprite):
         self.vfx_top = ParticleList()
         self.vfx_top.new_type('candle',1,[1,(1,2),(245,295), 5, 0.2, (0,-1.5),(204,255,255), (0,20,20), False])
         self.vfx_back = ParticleList()
-        self.vfx_back.new_type('maskDXR',3,[self.ani['dshX'].image, 0, 90, 1, 10, (204,255,255)])
-        self.vfx_back.new_type('maskDXL',3,[pygame.transform.flip(self.ani['dshX'].image, True, False), 0, 90, 1, 10, (204,255,255)])
-        self.vfx_back.new_type('maskDD',3,[self.ani['dshD'].image, 0, 90, 1, 10, (204,255,255)])
-        self.vfx_back.new_type('maskDU',3,[self.ani['dshU'].image, 0, 90, 1, 10, (204,255,255)])
+        self.vfx_back.new_type('maskDXR',2,[self.ani['dshX'].image, 0, 90, 1, 10, (204,255,255)])
+        self.vfx_back.new_type('maskDXL',2,[pygame.transform.flip(self.ani['dshX'].image, True, False), 0, 90, 1, 10, (204,255,255)])
+        self.vfx_back.new_type('maskDD',2,[self.ani['dshD'].image, 0, 90, 1, 10, (204,255,255)])
+        self.vfx_back.new_type('maskDU',2,[self.ani['dshU'].image, 0, 90, 1, 10, (204,255,255)])
         self.mask_color_extra = (255,240,204)
 
         self.state = 'idel'

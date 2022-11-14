@@ -85,10 +85,6 @@ class SplashVFX():
                 ]
                 pygame.draw.polygon(surf, self.color, points)
 
-class DustVFX():
-    def __init__(self):
-        pass
-
 class MaskVFX():
     def __init__(self, image:pygame.Surface, location:list, speed:float, angle:float, scale:float, time:int, color:tuple=(255,255,255), alpha_multi=1):
         self.end_alpha = 255 / time

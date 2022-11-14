@@ -1,5 +1,5 @@
 import pygame, random
-from .particle import SplashVFX, DustVFX, MaskVFX
+from .particle import SplashVFX, MaskVFX
 
 class ParticleList():
     def __init__(self):
@@ -39,8 +39,6 @@ class ParticleList():
                 self.particles.append(SplashVFX(tmp[0], location, random.randint(tmp[1][0], tmp[1][1]), random.randint(tmp[2][0], tmp[2][1]), 
                                                 tmp[3], tmp[4], tmp[5], tmp[6], tmp[7], tmp[8]))
             if thistype == 2:
-                self.particles.append(DustVFX())
-            if thistype == 3:
                 if color is not None:
                     tmp[5] = color
                 self.particles.append(MaskVFX(tmp[0], location, tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], alpha_multi))

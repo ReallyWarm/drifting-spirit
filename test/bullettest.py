@@ -9,7 +9,7 @@ pygame.display.set_caption('bullet')
 screen = pygame.display.set_mode((500, 500), 0, 32)
 
 box = pygame.Rect(200,200,50,50)
-bullets = BulletList()
+bullets = BulletList(image=pygame.image.load("sprite/bullet.png").convert_alpha())
 draw = False
 
 while True:
@@ -36,7 +36,7 @@ while True:
             mmb = pygame.mouse.get_pressed()[1]
             rmb = pygame.mouse.get_pressed()[2]
             if lmb:
-                bullets.add([mx,my], 20, 5, 90,time=100,particle=True)
+                bullets.add([mx,my], 32, 5, 180,time=200,color=(255,255,255),particle=False)
             if rmb:
                 pass
             if mmb:
@@ -47,11 +47,12 @@ while True:
     #         print(1)
     #     print(0)
     
-    bullets.update(1, box)
-    a = bullets.get_colliderect()
-    print(a)
-    bullets.draw(screen)
     pygame.draw.rect(screen, (100,255,100), box)
+    bullets.update(1, [box])
+    # a = bullets.get_collide()
+    # print(a)
+    # print(bullets.bullets)
+    bullets.draw(screen)
 
     pygame.display.flip()
     clock.tick(60)
