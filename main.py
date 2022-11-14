@@ -33,6 +33,7 @@ class GameWindow():
 
             pygame.display.update()
             self.delta = self.clock.tick(self.fps)
+            
         pygame.quit()
         sys.exit()
 
