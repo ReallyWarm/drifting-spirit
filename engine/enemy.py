@@ -9,6 +9,7 @@ class Enemy(pygame.sprite.Sprite):
         self.hitbox = pygame.Rect(self.rect.left+2, self.rect.top+2, self.rect.width-4, self.rect.height-4)
         self.ani = ani
         self.state = state
+        self.attacked = False
 
     def update(self, dt):
         self.image = self.ani[self.state].update(dt)
@@ -46,8 +47,10 @@ class Imp(Enemy):
         super().__init__(pos, self.ani['idle'].image, self.ani, self.state)
 
     def attack(self, bullets, dt, stop_attack=False):
+        self.attacked = False
         if not stop_attack:
             self.attack_time[0] += 1
             if self.attack_time[0] >= self.attack_time[1] / dt:
                 bullets.add([self.rect.centerx,self.rect.centery], 8, 1.5, 90, time=200, color=(175,60,40), particle=True)
                 self.attack_time[0] = 0
+                self.attacked = True

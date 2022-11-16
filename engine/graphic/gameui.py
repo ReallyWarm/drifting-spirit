@@ -53,11 +53,17 @@ class TextInput(pygame.sprite.Sprite):
         self.text = ''
         self.max_text = max_text
         self.show_preview = True
+        self.clicked =  False
         self.active = False
 
         self.image = pygame.Surface((width,height))
         self.rect = self.image.get_rect(topleft=(x,y))
         self.render_text()
+
+    def get_clicked(self):
+        click = self.clicked
+        self.clicked =  False
+        return click
 
     def get_input(self):
         text = self.text
@@ -71,6 +77,8 @@ class TextInput(pygame.sprite.Sprite):
         for event in event_list:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.active = self.rect.collidepoint(pygame.mouse.get_pos())
+                if self.active:
+                    self.clicked = True
             if event.type == pygame.KEYDOWN and self.active:
                 if event.key == pygame.K_RETURN:
                     self.active = False

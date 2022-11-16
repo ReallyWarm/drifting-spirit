@@ -47,15 +47,15 @@ class ParticleList():
 
     def update(self, dt):
         if len(self.particles) > 0:
-            for i, particle in reversed(list(enumerate(self.particles))):
+            for particle in self.particles:
                 particle.update(dt)
                 if not particle.alive:
-                    self.particles.pop(i)
+                    self.particles.remove(particle)
                 if self.border is not None:
                     if particle.loc[0] > self.border[0] + particle.spd * particle.scl * 4 or particle.loc[0] < -particle.spd * particle.scl * 4:
-                        self.particles.pop(i)
+                        self.particles.remove(particle)
                     elif particle.loc[1] > self.border[1] + particle.spd * particle.scl * 4 or particle.loc[1] < -particle.spd * particle.scl * 4:
-                        self.particles.pop(i)
+                        self.particles.remove(particle)
                         
     def draw(self, surf, offset=[0,0]):
         for particle in self.particles:

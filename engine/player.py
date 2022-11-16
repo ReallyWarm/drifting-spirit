@@ -48,6 +48,7 @@ class Player(pygame.sprite.Sprite):
         self.power_max = 6
         self.power_amount = self.power_default
         self.recharge_time = [0,100]
+        self.recharged = False
 
         self.dashing = False
         self.dash_direct = 0
@@ -148,12 +149,16 @@ class Player(pygame.sprite.Sprite):
         self.vfx_back.update(dt)
 
         # Power recharge
+        self.recharged = False
         if self.power_amount < self.power_default:
             if self.recharge_time[0] < self.recharge_time[1] / dt:
                 self.recharge_time[0] += 1
             else:
+                self.recharged = True
                 self.power_amount += 1
                 self.recharge_time[0] = 0
+        else:
+            self.recharge_time[0] = 0
 
         if self.damaged:
             if self.rg_health == 0:
