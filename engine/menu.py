@@ -38,11 +38,11 @@ class Menu():
         self.back_button = None
         self.set_menu()
 
-        self.select_sound = pygame.mixer.Sound('data/select.wav')
-        self.back_sound = pygame.mixer.Sound('data/cancel.wav')
-        self.score_sound = pygame.mixer.Sound('data/score.wav')
+        self.select_sound = pygame.mixer.Sound('sound/select.wav')
+        self.back_sound = pygame.mixer.Sound('sound/cancel.wav')
+        self.score_sound = pygame.mixer.Sound('sound/score.wav')
 
-        pygame.mixer.music.load('data/song1.mp3')
+        pygame.mixer.music.load('sound/song1.mp3')
         pygame.mixer.music.set_volume(0.8)
         pygame.mixer.music.play(-1)
 
@@ -129,7 +129,7 @@ class Menu():
             self.new_game = False
 
             pygame.mixer.music.unload()
-            pygame.mixer.music.load('data/song2.mp3')
+            pygame.mixer.music.load('sound/song2.mp3')
             pygame.mixer.music.set_volume(0.8)
             pygame.mixer.music.play(-1)
 
@@ -289,7 +289,7 @@ class Menu():
         self.new_game = True
         self.score_sound.play()
         pygame.mixer.music.unload()
-        pygame.mixer.music.load('data/song1.mp3')
+        pygame.mixer.music.load('sound/song1.mp3')
         pygame.mixer.music.set_volume(0.8)
         pygame.mixer.music.play(-1)
 
