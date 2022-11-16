@@ -15,6 +15,11 @@ class Game():
         self.canva = pygame.Surface(canva_size) # 3:2
         self.cva_rect = self.canva.get_rect()
 
+        self.bg_game = pygame.image.load('sprite/bg-game.png').convert()
+        self.bg_game = pygame.transform.scale(self.bg_game, (self.canva.get_width(), self.bg_game.get_height() * (self.canva.get_width() // self.bg_game.get_width())))
+        self.ground = pygame.image.load('sprite/ground.png').convert()
+        self.ground = pygame.transform.scale(self.ground, (self.canva.get_width(), self.ground.get_height() * (self.canva.get_width() // self.ground.get_width())))
+
         self.normal_health = sprite_at("sprite/heart-ui.png", (0,0,32,48))
         self.regen_health = sprite_at("sprite/heart-ui.png", (32,0,32,48))
 
@@ -30,7 +35,6 @@ class Game():
         self.bullets = BulletList(image=pygame.image.load("sprite/bullet.png").convert_alpha())
 
         self.offset = [0,0]
-        self.scroll_pos = [0,0]
         self.dt = 1
 
         plat_image = list()
@@ -63,6 +67,25 @@ class Game():
         self.health_ui_sprites = pygame.sprite.Group()
         self.power_ui_sprites = pygame.sprite.Group()
 
+        self.jump_sound = pygame.mixer.Sound('data/jump.wav')
+        self.jump_sound.set_volume(0.5)
+        self.power_sound = pygame.mixer.Sound('data/power.wav')
+        self.power_sound.set_volume(0.5)
+        self.damaged_sound = pygame.mixer.Sound('data/damaged.wav')
+        self.damaged_sound.set_volume(0.8)
+        self.dash_sound = pygame.mixer.Sound('data/dash.wav')
+        self.dash_sound.set_volume(0.2)
+        self.enemy_sound = pygame.mixer.Sound('data/enemy.wav')
+        self.enemy_sound.set_volume(0.5)
+        self.attack_sound = pygame.mixer.Sound('data/attack.wav')
+        self.attack_sound.set_volume(0.1)
+        self.dead_sound = pygame.mixer.Sound('data/dead.wav')
+        self.dead_sound.set_volume(0.3)
+        self.item_sound = pygame.mixer.Sound('data/item.wav')
+        self.item_sound.set_volume(0.5)
+        self.respawn_sound = pygame.mixer.Sound('data/respawn.wav')
+        self.respawn_sound.set_volume(0.2)
+
     def update_surface(self, win_scale):
         self.screen = pygame.display.get_surface()
         self.scr_size = pygame.display.get_window_size()
@@ -88,6 +111,7 @@ class Game():
 
     def init_level(self):
         self.running = True
+        self.current_height = 0
         self.height_meter = 0
         self.score_data = { 'height':0,
                             'enemy':{'ght':0,'imp':0},
@@ -99,8 +123,10 @@ class Game():
 
         self.offset[0] = 0
         self.offset[1] = self.player.rect.centery - (self.canva.get_height()*3/5)
-        self.scroll_pos[0] = 0
-        self.scroll_pos[1] = self.player.rect.centery - (self.canva.get_height()*3/5)
+
+        self.bg_pos = (0, self.canva.get_height() - self.bg_game.get_height())
+        self.bg_rect = self.bg_game.get_rect(topleft=self.bg_pos)
+        self.ground_pos = (0,self.player.rect.bottom)
 
         self.scene_id = self.scene_type['game']
         self.particles.particles = []
@@ -174,22 +200,11 @@ class Game():
     def input(self, event_list):
         pass
         # mx, my = pygame.mouse.get_pos()
-        # for event in event_list:
-        #     if event.type == pygame.KEYDOWN:
-        #         if event.key == pygame.K_q:
-        #             self.ptc_id = 'flame0'
-        #         if event.key == pygame.K_w:
-        #             self.ptc_id = 'spark0'
-        #         if event.key == pygame.K_e:
-        #             self.ptc_id = 'dusts0'
-        #         if event.key == pygame.K_r:
-        #             self.ptc_id = 'candle'
 
-            
         # if self.cva_rect.collidepoint(mx, my):
         #     if pygame.mouse.get_pressed()[0]:
         #         for i in range(1):
-        #             self.particles.add(self.ptc_id, [(mx-self.cva_rect.x)*self.cva_scale[0]+self.offset[0], (my-self.cva_rect.y)*self.cva_scale[1]+self.offset[1]], self.dt)
+        #             self.particles.add(ptc_id, [(mx-self.cva_rect.x)*self.cva_scale[0]+self.offset[0], (my-self.cva_rect.y)*self.cva_scale[1]+self.offset[1]], self.dt)
 
     def update(self, event_list, dt):
         self.scene[self.scene_id](event_list, dt)
@@ -200,21 +215,26 @@ class Game():
         self.scene_update(dt)
         self.scroll(self.dt)
 
-        # update and collide enemies
+        self.bg_rect.y = self.bg_pos[1] + self.bg_rect.height * (self.current_height / 3000)
+
+        # Update enemies
         for enemy in self.enemy_sprites.sprites():
             rm_enemy = False
+            # Enemy attack with sound
             enemy.attack(self.bullets, self.dt, stop_attack=False)
+            if enemy.attacked:
+                self.attack_sound.play()
+            # Collide enemy
             if enemy.hitbox.colliderect(self.player.rect):
                 if self.player.dashing:
                     rm_enemy = True
                 elif not self.player.immunity:
-                    if self.player.vel.y > 0:
-                        if self.player.rect.bottom <= enemy.rect.centery or self.player.vel.y > enemy.rect.height // 2:
-                            self.player.vel.y = -5 * self.dt
-                            rm_enemy = True
+                    if self.player.vel.y > 0 and (self.player.rect.bottom <= enemy.rect.centery or self.player.vel.y > enemy.rect.height // 2):
+                        self.player.vel.y = -5 * self.dt
+                        rm_enemy = True
                     else:
                         self.player.damaged = True
-            # Remove enemy with effect
+            # Remove enemy with particle and sound
             if rm_enemy:
                 # Particle
                 if self.player.dashing:
@@ -228,6 +248,11 @@ class Game():
 
                 self.score_data['enemy'][enemy.name] += 1
                 self.enemy_sprites.remove(enemy)
+                self.enemy_sound.play()
+
+                # Refund power
+                if self.player.power_amount < self.player.power_default:
+                    self.player.power_amount += 1
 
         
         if self.bullets.get_collide() == Player:
@@ -258,6 +283,7 @@ class Game():
                         self.score_data['item'][item.name] += 1
 
                 self.item_sprites.remove(item)
+                self.item_sound.play()
 
         # Level loading
         top_plat = 320
@@ -277,7 +303,7 @@ class Game():
             if self.next_plat > 0:
                 self.next_plat -= 1
 
-        # Update danger zone
+        # Update hit ground with sound
         if self.player.hit_ground:
             self.danger_zone.update_height(self.player.rect.midbottom)
         self.danger_zone.update(self.dt)
@@ -285,12 +311,19 @@ class Game():
         if self.portal is not None:
             self.portal.update(self.dt)
 
-        # Other game particles
+        # Other game particles and sound
+        if self.player.damaged:
+            self.damaged_sound.play()
         if self.player.immunity:
             self.particles.add('damaged', [random.randint(self.player.rect.left,self.player.rect.right), self.player.rect.bottom], self.dt)
         if self.player.jumped and self.player.jump_time[0] == 1:
+            self.jump_sound.play()
             for _ in range(6):
                 self.particles.add('jump', [random.randint(self.player.rect.centerx-self.player.rect.w//4,self.player.rect.centerx+self.player.rect.w//4), self.player.rect.bottom], self.dt)
+        if self.player.recharged:
+            self.power_sound.play()
+        if self.player.dashing and self.player.dash_time[0] <= 1:
+            self.dash_sound.play()
 
         # Scene change
         if self.player.health == 0:
@@ -299,6 +332,7 @@ class Game():
                 if i < 20:
                     self.scene_ptc.add('smoke', [random.randint(self.player.rect.left,self.player.rect.right),random.randint(self.player.rect.top,self.player.rect.bottom)], self.dt)
             self.scene_id = self.scene_type['shatter']
+            self.dead_sound.play()
 
         if self.player.rect.bottom > self.danger_zone.rect.top + self.player.rect.height:
             for i in range(24):
@@ -308,12 +342,13 @@ class Game():
             self.scene_id = self.scene_type['respawn']
             self.player.damaged = True
             self.player.update(self.dt)
+            self.dead_sound.play()
 
     def ui_update(self):
         # update UI
-        current_height = (self.canva.get_height() - self.player.rect.bottom) * 10 // 32
-        if current_height > self.height_meter:
-            self.height_meter = current_height
+        self.current_height = (self.canva.get_height() - self.player.rect.bottom) * 10 // 32
+        if self.current_height > self.height_meter:
+            self.height_meter = self.current_height
 
         self.height_text = self.font.render(f'Height : {self.height_meter}', True, (255,255,255))
 
@@ -361,6 +396,7 @@ class Game():
                     self.scene_ptc.add('respawned', [self.player.pos.x+12, self.player.pos.y+24], self.dt, angle=(165,270))
                     self.scene_ptc.add('respawned', [self.player.pos.x+12, self.player.pos.y+24], self.dt, angle=(270,375))
                 self.scene_id = self.scene_type['game']
+                self.respawn_sound.play()
 
             else:
                 self.quit_game()
@@ -398,7 +434,10 @@ class Game():
         self.ui_update()
 
     def draw(self):
-        self.canva.fill((0,0,100))
+        self.canva.fill((64,89,160))
+        self.canva.blit(self.bg_game, self.bg_rect)
+        if (self.offset[1] > 0):
+            self.canva.blit(self.ground, (self.ground_pos[0]-self.offset[0], self.ground_pos[1]-self.offset[1]))
 
         for platform in self.plat_sprites:
             self.canva.blit(platform.image, (platform.rect.x-self.offset[0], platform.rect.y-self.offset[1]))
@@ -418,7 +457,7 @@ class Game():
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
 
-        pygame.draw.rect(self.screen, (40,50,150),self.height_rect)
+        pygame.draw.rect(self.screen, (40,50,150), self.height_rect)
         pygame.draw.rect(self.screen, (80,90,190), self.height_rect,4)
         self.screen.blit(self.height_text, self.height_text.get_rect(midleft=(self.height_rect.x+self.height_rect.width//15, self.height_rect.y+self.height_rect.height//2)))
         self.health_ui_sprites.draw(self.screen)

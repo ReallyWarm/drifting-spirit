@@ -38,6 +38,14 @@ class Menu():
         self.back_button = None
         self.set_menu()
 
+        self.select_sound = pygame.mixer.Sound('data/select.wav')
+        self.back_sound = pygame.mixer.Sound('data/cancel.wav')
+        self.score_sound = pygame.mixer.Sound('data/score.wav')
+
+        pygame.mixer.music.load('data/song1.mp3')
+        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.play(-1)
+
         self.game = Game((256,320), self.scale)
         self.new_game = True
         self.run = True
@@ -48,6 +56,10 @@ class Menu():
         self.fontH = pygame.font.Font('data/ARCADEPI.TTF', int(40*sh))
         self.fontL = pygame.font.Font('data/ARCADEPI.TTF', int(25*sh))
         self.fontM = pygame.font.Font('data/ARCADEPI.TTF', int(20*sh))
+
+        self.bg_main = pygame.transform.scale(pygame.image.load('sprite/bg-main.png').convert(), self.scr_option[self.scr_id])
+        self.bg1 = pygame.transform.scale(pygame.image.load('sprite/bg1.png').convert(), self.scr_option[self.scr_id])
+        self.bg2 = pygame.transform.scale(pygame.image.load('sprite/bg2.png').convert(), self.scr_option[self.scr_id])
 
         self.back_button = Button(self.scr_size[0] - 80*sw, 30*sh, 50*sw, 50*sh, (40,50,150), self.fontL, '->')
 
@@ -116,6 +128,11 @@ class Menu():
             self.score = dict()
             self.new_game = False
 
+            pygame.mixer.music.unload()
+            pygame.mixer.music.load('data/song2.mp3')
+            pygame.mixer.music.set_volume(0.8)
+            pygame.mixer.music.play(-1)
+
         self.current_menu[self.id](event_list, dt)
 
     def main_menu(self, event_list, _):
@@ -123,6 +140,7 @@ class Menu():
 
         for i, button in enumerate(self.main_menu_button.sprites()):
             if button.get_clicked():
+                self.select_sound.play()
                 if i == 3:
                     self.run = False
                 elif i == 0:
@@ -132,7 +150,7 @@ class Menu():
                 elif i == 2:
                     self.id = 3
             
-        self.screen.fill((200,220,255))
+        self.screen.blit(self.bg_main, (0,0))
         self.main_menu_button.draw(self.screen)
 
     def game_loop(self, event_list, dt):
@@ -140,16 +158,14 @@ class Menu():
             self.back_button.update(event_list)
 
             if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked():
+                self.back_sound.play()
                 self.pause = True
                 self.game.reset_player_move()
 
             self.game.update(event_list, dt)
 
             if not self.game.running:
-                self.calculate_score()
-                self.set_score_board()
-                self.id = 4
-                self.new_game = True
+                self.after_quit_game()
             
         self.screen.fill((30,30,30))
         self.game.draw()
@@ -163,9 +179,10 @@ class Menu():
         self.back_button.update(event_list)
 
         if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked():
+            self.back_sound.play()
             self.id = 0
             
-        self.screen.fill((200,220,255))
+        self.screen.blit(self.bg2, (0,0))
         self.back_button.draw(self.screen)
         self.screen.blit(self.rank_board, self.rank_board_pos)
         self.screen.blit(self.rank_text, self.rank_board_pos)
@@ -176,10 +193,12 @@ class Menu():
         self.option_menu_button.update(event_list)
 
         if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.back_button.get_clicked():
+            self.back_sound.play()
             self.id = 0
 
         for i, button in enumerate(self.option_menu_button.sprites()):
             if button.get_clicked():
+                self.select_sound.play()
                 if i < 4:
                     self.scr_id = i
                     self.scr_size = self.scr_option[self.scr_id]
@@ -190,7 +209,7 @@ class Menu():
                 elif i < 7:
                     self.fps_id = i - 4
   
-        self.screen.fill((100,220,155))
+        self.screen.blit(self.bg1, (0,0))
         self.screen.blit(self.res_title, self.res_title_rect)
         self.screen.blit(self.fps_title, self.fps_title_rect)
         self.back_button.draw(self.screen)
@@ -200,7 +219,11 @@ class Menu():
         self.done_input.update(event_list)
         self.name_input.update(event_list)
 
+        if self.name_input.get_clicked():
+            self.select_sound.play()
+
         if pygame.key.get_pressed()[pygame.K_ESCAPE] or self.done_input.get_clicked():
+            self.select_sound.play()
             self.id = 0
 
             this_name = self.name_input.get_input()
@@ -235,7 +258,7 @@ class Menu():
 
             self.set_rank_board()
 
-        self.screen.fill((100,220,155))
+        self.screen.blit(self.bg1, (0,0))
         self.screen.blit(self.score_board, self.score_board_pos)
         self.screen.blit(self.score_text, self.score_board_pos)
         self.screen.blit(self.score_title, self.score_title_rect)
@@ -245,20 +268,30 @@ class Menu():
     def pause_menu(self, event_list):
         self.pause_menu_button.update(event_list)
 
-        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            self.pause = False
         for i, button in enumerate(self.pause_menu_button.sprites()):
             if button.get_clicked():
+                if i == 0:
+                    self.select_sound.play()
                 if i == 1:
+                    self.back_sound.play()
                     self.game.quit_game()
-                    self.calculate_score()
-                    self.set_score_board()
-                    self.id = 4
-                    self.new_game = True
+                    self.after_quit_game()
+                    
                 self.pause = False
 
         self.screen.blit(self.pause_menu_tint, (0,0))
         self.pause_menu_button.draw(self.screen)
+
+    def after_quit_game(self):
+        self.calculate_score()
+        self.set_score_board()
+        self.id = 4
+        self.new_game = True
+        self.score_sound.play()
+        pygame.mixer.music.unload()
+        pygame.mixer.music.load('data/song1.mp3')
+        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.play(-1)
 
     def calculate_score(self):
         score_data = self.game.score_data
