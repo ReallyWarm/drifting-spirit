@@ -11,6 +11,9 @@ class Enemy(pygame.sprite.Sprite):
         self.state = state
         self.attacked = False
 
+    def attack(self, bullets, dt, stop_attack=False):
+        pass
+
     def update(self, dt):
         self.image = self.ani[self.state].update(dt)
 
@@ -27,9 +30,6 @@ class Ghost(Enemy):
                     self.ani[name].sprites[i] = pygame.transform.flip(image, True, False)
 
         super().__init__(pos, self.ani['idle'].image, self.ani, self.state)
-    
-    def attack(self, bullets, dt, stop_attack=False):
-        pass
 
 class Imp(Enemy):
     def __init__(self, name, pos):

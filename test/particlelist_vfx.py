@@ -21,7 +21,7 @@ particles.new_type('pti',1,[2,(4,8),(135,405), 2, 0.1 ,(-0.2,-0.4),(60,90, 90), 
 particles.new_type('pto',1,[3,(3,4),(  0,360), 3, 0.05,     None,(200,100,200), False, False])
 particles.new_type('ptp',1,[3,(2,6),(  0,360), 5, 0.1 ,(0.3,0.1),( 55,255,255), False, False])
 particles.new_type('t1',1,[1,(1,2),(200,340),3,0.05,(0,0.2),(255,255,255),None,False],0)
-particles.add_border(screen.get_size())
+particles.add_border((100, 400), (100, 400))
 
 typed = particles.get_name()
 index = 0

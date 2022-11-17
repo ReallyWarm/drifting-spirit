@@ -7,7 +7,7 @@ class ParticleList():
         self.particle_type = dict()
         self.time = dict()
         self.particles = list()
-        self.border = None
+        self.border = [None,None]
 
     def new_type(self, name, type, data, time=1):
         self.particle_data[name] = data
@@ -17,8 +17,9 @@ class ParticleList():
     def get_name(self):
         return [key for key in self.particle_type]
 
-    def add_border(self, border):
-        self.border = border
+    def add_border(self, borderx=None, bordery=None):
+        self.border[0] = borderx
+        self.border[1] = bordery
     
     def add(self, name, location, dt, 
                   angle:list=None, fric=None, # type 1
@@ -45,17 +46,22 @@ class ParticleList():
 
             self.time[name][0] = 0
 
-    def update(self, dt):
+    def update(self, dt, set_pos=(None,None)):
         if len(self.particles) > 0:
             for particle in self.particles:
+                if set_pos[0] is not None:
+                    particle.loc[0] = set_pos[0]
+                if set_pos[1] is not None:
+                    particle.loc[1] = set_pos[1]
                 particle.update(dt)
                 if not particle.alive:
                     self.particles.remove(particle)
-                if self.border is not None:
-                    if particle.loc[0] > self.border[0] + particle.spd * particle.scl * 4 or particle.loc[0] < -particle.spd * particle.scl * 4:
-                        self.particles.remove(particle)
-                    elif particle.loc[1] > self.border[1] + particle.spd * particle.scl * 4 or particle.loc[1] < -particle.spd * particle.scl * 4:
-                        self.particles.remove(particle)
+                elif (self.border[0] is not None) and \
+                     (particle.loc[0] > self.border[0][1] + particle.spd * particle.scl * 4 or particle.loc[0] < self.border[0][0] - particle.spd * particle.scl * 4):
+                    self.particles.remove(particle)
+                elif (self.border[1] is not None) and \
+                     (particle.loc[1] > self.border[1][1] + particle.spd * particle.scl * 4 or particle.loc[1] < self.border[1][0] - particle.spd * particle.scl * 4):
+                    self.particles.remove(particle)
                         
     def draw(self, surf, offset=[0,0]):
         for particle in self.particles:

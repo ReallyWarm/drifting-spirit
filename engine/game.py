@@ -48,9 +48,8 @@ class Game():
 
         self.particles = ParticleList()
         self.particles.new_type('jump',1,[1,(2,3),(240,300),3,0.1,(0,0.1),(255,255,255),None,False],0)
-        self.particles.new_type('kill',1,[2,(7,9),(0,360),2,0.3,None,(204,255,255),False,False])
-        self.particles.new_type('vanish',1,[1,(1,3),(0,360),3,0.05,None,(204,255,255),(0,20,20),False], 0)
-        self.particles.new_type('dusts0',1,[1,(2,3),(180,360), 4, 0.1 ,(0.1,0.1),(255,255,255), False, True])
+        self.particles.new_type('kill',1,[2,(7,9),(0,360),2,0.3,None,(204,255,255),False,False], 0)
+        self.particles.new_type('sparkle',1,[1,(1,3),(0,360),3,0.05,None,(255,255,255),(20,20,20),False], 0)
         self.particles.new_type('candle',1,[1,(5,7),(180,360), 5, 0.1, None,(204,255,255), (0,20,20), False], 0)
         self.particles.new_type('damaged',1,[1,(2,3),(220,320), 3, 0.1,(-0.1,-0.2),(204,255,255), (0,20,20), True], 3)
         self.ptc_id = 'flame0'
@@ -244,7 +243,7 @@ class Game():
                 for i in range(8):
                     if i < 4:
                         self.particles.add('kill', [enemy.rect.centerx, enemy.rect.centery], self.dt, angle=angle)
-                    self.particles.add('vanish', [enemy.rect.centerx, enemy.rect.centery], self.dt)
+                    self.particles.add('sparkle', [enemy.rect.centerx, enemy.rect.centery], self.dt)
 
                 self.score_data['enemy'][enemy.name] += 1
                 self.enemy_sprites.remove(enemy)
@@ -263,13 +262,13 @@ class Game():
         for item in self.item_sprites.sprites():
             if item.hitbox.colliderect(self.player.rect):
                 effect = item.amount
-                if isinstance(item, (ItemDash)):
+                if item.name.startswith('td'):
                     for i in range(effect):
                         if self.player.power_amount < self.player.power_max:
                             self.player.power_amount += 1
                         else:
                             break
-                elif isinstance(item, (ItemHealth)):
+                elif item.name.startswith('th'):
                     if self.player.health + self.player.rg_health == self.player.max_health:
                         self.score_data['item'][item.name] += 1
                     else:
@@ -278,9 +277,14 @@ class Game():
                                 self.player.rg_health += 1
                             else:
                                 break
-                elif isinstance(item, (ItemScore)):
+                elif item.name.startswith('ts'):
                     for i in range(effect):
                         self.score_data['item'][item.name] += 1
+
+                for _ in range(8):
+                    self.particles.add('sparkle', [item.rect.centerx, item.rect.centery], self.dt, color=(255,220,192))
+                for _ in range(8):
+                    self.particles.add('sparkle', [item.rect.centerx, item.rect.centery], self.dt, color=(192,245,255))
 
                 self.item_sprites.remove(item)
                 self.item_sound.play()
@@ -303,10 +307,9 @@ class Game():
             if self.next_plat > 0:
                 self.next_plat -= 1
 
-        # Update hit ground with sound
+        # Update hit ground
         if self.player.hit_ground:
             self.danger_zone.update_height(self.player.rect.midbottom)
-        self.danger_zone.update(self.dt)
 
         if self.portal is not None:
             self.portal.update(self.dt)
@@ -421,6 +424,7 @@ class Game():
         self.bullets.update(self.dt, [self.player,self.danger_zone])
         self.particles.update(self.dt)
         self.scene_ptc.update(self.dt)
+        self.danger_zone.update(self.dt)
         self.ui_update()
 
     def background_update(self, dt):
@@ -431,29 +435,33 @@ class Game():
         self.bullets.update(1, [self.danger_zone])
         self.particles.update(self.dt)
         self.scene_ptc.update(self.dt)
+        self.danger_zone.update(self.dt)
         self.ui_update()
 
     def draw(self):
         self.canva.fill((64,89,160))
         self.canva.blit(self.bg_game, self.bg_rect)
+        offset = [round(self.offset[0]), round(self.offset[1])]
+
         if (self.offset[1] > 0):
-            self.canva.blit(self.ground, (self.ground_pos[0]-self.offset[0], self.ground_pos[1]-self.offset[1]))
+            self.canva.blit(self.ground, (self.ground_pos[0]-offset[0], self.ground_pos[1]-offset[1]))
 
-        for platform in self.plat_sprites:
-            self.canva.blit(platform.image, (platform.rect.x-self.offset[0], platform.rect.y-self.offset[1]))
-        for enemy in self.enemy_sprites:
-            self.canva.blit(enemy.image, (enemy.rect.x-self.offset[0], enemy.rect.y-self.offset[1]))
-        for item in self.item_sprites:
-            self.canva.blit(item.image, (item.rect.x-self.offset[0], item.rect.y-self.offset[1]))
-        self.player.draw(self.canva, self.offset)
-
-        self.danger_zone.draw(self.canva, self.offset)
         if self.portal is not None:
-            self.canva.blit(self.portal.image, (self.portal.rect.x-self.offset[0], self.portal.rect.y-self.offset[1]))
+            self.portal.draw(self.canva, offset)
+            
+        for platform in self.plat_sprites:
+            self.canva.blit(platform.image, (platform.rect.x-offset[0], platform.rect.y-offset[1]))
+        for enemy in self.enemy_sprites:
+            self.canva.blit(enemy.image, (enemy.rect.x-offset[0], enemy.rect.y-offset[1]))
+        for item in self.item_sprites:
+            self.canva.blit(item.image, (item.rect.x-offset[0], item.rect.y-offset[1]))
+        self.player.draw(self.canva, offset)
 
-        self.particles.draw(self.canva, self.offset)
-        self.scene_ptc.draw(self.canva, self.offset)
-        self.bullets.draw(self.canva, self.offset)
+        self.danger_zone.draw(self.canva, offset)
+
+        self.particles.draw(self.canva, offset)
+        self.scene_ptc.draw(self.canva, offset)
+        self.bullets.draw(self.canva, offset)
 
         self.screen.blit(pygame.transform.scale(self.canva, self.cva_rect.size), self.cva_rect.topleft)
 
