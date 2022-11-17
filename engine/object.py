@@ -1,4 +1,4 @@
-import pygame, random
+import pygame, random, math
 from engine.graphic.spritesheet import sprite_at
 from engine.graphic.particlelist import ParticleList
 
@@ -41,9 +41,44 @@ class Portal(pygame.sprite.Sprite):
     def __init__(self, pos):
         self.image = sprite_at("sprite/portal.png", (0,0,32,48))
         self.rect = self.image.get_rect(topleft = pos)
+        self.finish_time = [0, 180]
+        self.finished = False
+
+        self.particles = ParticleList()
+        self.particles.new_type('light',1,[1,(1,2),(250,290),2,0.05,None,(192,245,255),(20,20,20),False],20)
+        self.particles.new_type('finish',1,[1,(4,5),(0,360),5,0.1,None,(192,245,255),(20,20,20),False],0)
+        self.particle_color = ((192,245,255),(255,220,192))
 
     def update(self, dt):
-        pass
+        self.particles.add('light', [random.randint(self.rect.left,self.rect.right),self.rect.bottom], dt, color=self.particle_color[random.randrange(0,2)])
+        self.particles.update(dt)
+
+    def finish_effect(self, dt, surf_size):
+        if not self.finished:
+            w = surf_size[0] // 2
+            h = surf_size[1] // 2
+            for _ in range(4):
+                side = random.randint(1,4)
+                if side == 1:
+                    pos = [self.rect.centerx-w, random.randint(self.rect.centery-h,self.rect.centery+h)]
+                elif side == 2:
+                    pos = [self.rect.centerx+w, random.randint(self.rect.centery-h,self.rect.centery+h)]
+                elif side == 3:
+                    pos = [random.randint(self.rect.centerx-w,self.rect.centerx+w), self.rect.centery-h]
+                elif side == 4:
+                    pos = [random.randint(self.rect.centerx-w,self.rect.centerx+w), self.rect.centery+h]
+                angle = round(math.degrees(math.atan2(self.rect.centery-pos[1],self.rect.centerx-pos[0])))
+
+                self.particles.add('finish', pos, dt, color=self.particle_color[random.randrange(0,2)], angle=(angle,angle))
+
+            self.particles.update(dt)
+            self.finish_time[0] += 1
+
+            if self.finish_time[0] >= self.finish_time[1] / dt:
+                self.finished = True
+                self.finish_time[0] = 0
+
     
     def draw(self, surf, offset=[0,0]):
         surf.blit(self.image, (self.rect.x-offset[0], self.rect.y-offset[1]))
+        self.particles.draw(surf, offset)

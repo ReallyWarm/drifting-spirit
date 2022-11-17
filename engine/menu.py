@@ -300,16 +300,18 @@ class Menu():
         self.score['enemy'] = dict()
         self.score['enemy']['ght'] = score_data['enemy']['ght'] * 100
         self.score['enemy']['imp'] = score_data['enemy']['imp'] * 300
+        self.score['enemy']['mag'] = score_data['enemy']['mag'] * 400
+        self.score['enemy']['all'] = self.score['enemy']['ght']+self.score['enemy']['imp']+self.score['enemy']['mag']
         self.score['item'] = dict()
         self.score['item']['ts1'] = score_data['item']['ts1'] * 200
         self.score['item']['th1'] = score_data['item']['th1'] * 150
 
-        self.score['health'] = 0
-        if score_data['height'] >= 100:
-            self.score['health'] = score_data['health'] * 100
+        self.score['health'] = score_data['health'] * 100
+        self.score['portal'] = score_data['portal'] * 2000
+        self.score['bonus'] = self.score['health']+self.score['portal']
 
-        self.score['all'] = self.score['height']+self.score['enemy']['ght']+self.score['enemy']['imp']+\
-                            self.score['item']['ts1']+self.score['item']['th1']+self.score['health']
+        self.score['all'] = self.score['height']+self.score['enemy']['all']+\
+                            self.score['item']['ts1']+self.score['item']['th1']+self.score['bonus']
 
     def set_rank_board(self):
         self.rank_text = pygame.Surface(self.rank_board.get_size(), pygame.SRCALPHA)
@@ -333,11 +335,10 @@ class Menu():
     def set_score_board(self):
         lsc = list()
         lsc.append(('Height',self.score['height']))
-        lsc.append(('Ghost',self.score['enemy']['ght']))
-        lsc.append(('Imp',self.score['enemy']['imp']))
-        lsc.append(('Score Item',self.score['item']['ts1']))
-        lsc.append(('Over Heal',self.score['item']['th1']))
-        lsc.append(('Bonus',self.score['health']))
+        lsc.append(('Enemies',self.score['enemy']['all']))
+        lsc.append(('Score Items',self.score['item']['ts1']))
+        lsc.append(('Over Heals',self.score['item']['th1']))
+        lsc.append(('Bonus',self.score['bonus']))
         lsc.append(('Total Score',self.score['all']))
 
         self.score_text = pygame.Surface(self.score_board.get_size(), pygame.SRCALPHA)
@@ -350,16 +351,15 @@ class Menu():
             image_surf = self.iscore[i]
             text_surf = self.fontM.render(data[0], True, (255,255,255))
             score_surf = self.fontM.render(f'{data[1]}', True, (255,255,255))
-            self.score_text.blit(image_surf, image_surf.get_rect(center=(self.score_text.get_width()//10,self.score_text.get_height()*(i+2)//9)))
-            self.score_text.blit(text_surf, text_surf.get_rect(midleft=(self.score_text.get_width()*2//10,self.score_text.get_height()*(i+2)//9)))
-            self.score_text.blit(score_surf, score_surf.get_rect(center=(self.score_text.get_width()*8//10,self.score_text.get_height()*(i+2)//9)))
+            self.score_text.blit(image_surf, image_surf.get_rect(center=(self.score_text.get_width()//10,self.score_text.get_height()*(i+2)//8)))
+            self.score_text.blit(text_surf, text_surf.get_rect(midleft=(self.score_text.get_width()*2//10,self.score_text.get_height()*(i+2)//8)))
+            self.score_text.blit(score_surf, score_surf.get_rect(center=(self.score_text.get_width()*8//10,self.score_text.get_height()*(i+2)//8)))
 
     def set_score_icon(self, scale):
         sw, sh = scale
         self.iscore = list()
         pygame.transform.set_smoothscale_backend
         self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/platform.png", (96,0,32,16)), (32*sw,16*sh)))
-        self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/ghost-idle.png", (0,0,32,32)), (32*sw,32*sh)))
         self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/imp-idle.png", (0,0,32,32)), (32*sw,32*sh)))
         self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/spirit-item.png",(0,48,24,24)), (32*sw,32*sh)))
         self.iscore.append(pygame.transform.smoothscale(sprite_at("sprite/spirit-item.png",(0,24,24,24)), (32*sw,32*sh)))

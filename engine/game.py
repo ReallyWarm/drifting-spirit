@@ -1,9 +1,9 @@
-import pygame, random
+import pygame, random, math
 from engine.graphic.spritesheet import sprite_at, load_sheet
 from engine.graphic.gameui import HealthUI, PowerUI
 from engine.graphic.particlelist import ParticleList
 from engine.platform import PlatformSet, Platform
-from engine.enemy import Ghost, Imp
+from engine.enemy import Ghost, Imp, Mage
 from engine.item import ItemDash, ItemHealth, ItemScore
 from engine.player import Player
 from engine.object import DangerZone, Portal
@@ -28,8 +28,8 @@ class Game():
 
         self.update_surface(scale)
 
-        self.scene = [self.game_scene,self.respawn_scene,self.shatter_scene]
-        self.scene_type = {'game':0,'respawn':1,'shatter':2}
+        self.scene = [self.game_scene,self.respawn_scene,self.shatter_scene,self.finish]
+        self.scene_type = {'game':0,'respawn':1,'shatter':2,'finish':3}
         self.scene_id = self.scene_type['game']
 
         self.bullets = BulletList(image=pygame.image.load("sprite/bullet.png").convert_alpha())
@@ -84,6 +84,8 @@ class Game():
         self.item_sound.set_volume(0.5)
         self.respawn_sound = pygame.mixer.Sound('sound/respawn.wav')
         self.respawn_sound.set_volume(0.2)
+        self.finish_sound = pygame.mixer.Sound('sound/finish.wav')
+        self.finish_sound.set_volume(0.8)
 
     def update_surface(self, win_scale):
         self.screen = pygame.display.get_surface()
@@ -113,9 +115,10 @@ class Game():
         self.current_height = 0
         self.height_meter = 0
         self.score_data = { 'height':0,
-                            'enemy':{'ght':0,'imp':0},
+                            'enemy':{'ght':0,'imp':0,'mag':0},
                             'item':{'ts1':0,'th1':0},
-                            'health':0
+                            'health':0,
+                            'portal':0
                           }
 
         self.player = Player((150,320))
@@ -144,6 +147,8 @@ class Game():
                     layer_data.append(Ghost('ght',(data[2],self.canva.get_height()-data[3])))
                 elif data[0] == 'imp':
                     layer_data.append(Imp('imp',(data[2],self.canva.get_height()-data[3])))
+                elif data[0] == 'mag':
+                    layer_data.append(Mage('mag',(data[2],self.canva.get_height()-data[3])))
                 elif data[0] == 'td1':
                     layer_data.append(ItemDash('td1',(data[2],self.canva.get_height()-data[3])))
                 elif data[0] == 'th1':
@@ -189,7 +194,7 @@ class Game():
         for data in layer:
             if isinstance(data, Platform):
                 self.plat_sprites.add(data)
-            elif isinstance(data, (Ghost,Imp)):
+            elif isinstance(data, (Ghost,Imp,Mage)):
                 self.enemy_sprites.add(data)
             elif isinstance(data, (ItemDash,ItemHealth,ItemScore)):
                 self.item_sprites.add(data)
@@ -220,19 +225,21 @@ class Game():
         for enemy in self.enemy_sprites.sprites():
             rm_enemy = False
             # Enemy attack with sound
-            enemy.attack(self.bullets, self.dt, stop_attack=False)
+            if enemy.name == 'mag':
+                angle = round(math.degrees(math.atan2(self.player.rect.centery-enemy.rect.centery,self.player.rect.centerx-enemy.rect.centerx)))
+                enemy.set_attack_angle([angle])
+            enemy.attack(self.bullets, self.dt)
             if enemy.attacked:
                 self.attack_sound.play()
             # Collide enemy
             if enemy.hitbox.colliderect(self.player.rect):
                 if self.player.dashing:
                     rm_enemy = True
-                elif not self.player.immunity:
-                    if self.player.vel.y > 0 and (self.player.rect.bottom <= enemy.rect.centery or self.player.vel.y > enemy.rect.height // 2):
+                elif self.player.vel.y > 0 and (self.player.rect.bottom <= enemy.rect.centery or self.player.vel.y > enemy.rect.height // 2):
                         self.player.vel.y = -5 * self.dt
                         rm_enemy = True
-                    else:
-                        self.player.damaged = True
+                elif not self.player.immunity:
+                    self.player.damaged = True
             # Remove enemy with particle and sound
             if rm_enemy:
                 # Particle
@@ -311,9 +318,6 @@ class Game():
         if self.player.hit_ground:
             self.danger_zone.update_height(self.player.rect.midbottom)
 
-        if self.portal is not None:
-            self.portal.update(self.dt)
-
         # Other game particles and sound
         if self.player.damaged:
             self.damaged_sound.play()
@@ -346,6 +350,14 @@ class Game():
             self.player.damaged = True
             self.player.update(self.dt)
             self.dead_sound.play()
+
+        if self.portal is not None:
+            if self.player.rect.bottom <= self.portal.rect.bottom:
+                if self.portal.rect.colliderect(self.player.rect):
+                    self.scene_id = self.scene_type['finish']
+                    self.score_data['portal'] = 1
+                    self.reset_player_move()
+                    self.finish_sound.play()
 
     def ui_update(self):
         # update UI
@@ -414,6 +426,18 @@ class Game():
         if len(self.scene_ptc.particles) == 0:
             self.quit_game()
 
+    def finish(self, _, dt):
+        self.background_update(dt)
+        self.player.move(self.block_sprites.sprites(), self.plat_sprites.sprites(), dt)
+        self.player.update(self.dt)
+        self.bullets.update(self.dt, [self.player,self.danger_zone])
+        self.player.vfx_top.update(self.dt)
+        self.player.vfx_back.update(self.dt)
+        self.portal.finish_effect(dt, self.canva.get_size())
+
+        if self.portal.finished:
+            self.quit_game()
+
     def scene_update(self, dt):
         self.dt = dt
         self.player.move(self.block_sprites.sprites(), self.plat_sprites.sprites(), dt)
@@ -425,6 +449,8 @@ class Game():
         self.particles.update(self.dt)
         self.scene_ptc.update(self.dt)
         self.danger_zone.update(self.dt)
+        if self.portal is not None:
+            self.portal.update(self.dt)
         self.ui_update()
 
     def background_update(self, dt):
@@ -436,6 +462,8 @@ class Game():
         self.particles.update(self.dt)
         self.scene_ptc.update(self.dt)
         self.danger_zone.update(self.dt)
+        if self.portal is not None:
+            self.portal.update(self.dt)
         self.ui_update()
 
     def draw(self):
@@ -448,7 +476,7 @@ class Game():
 
         if self.portal is not None:
             self.portal.draw(self.canva, offset)
-            
+
         for platform in self.plat_sprites:
             self.canva.blit(platform.image, (platform.rect.x-offset[0], platform.rect.y-offset[1]))
         for enemy in self.enemy_sprites:
@@ -484,7 +512,7 @@ class Game():
     def quit_game(self):
         self.running = False
         self.score_data['height'] = self.height_meter
-        if self.height_meter > 1000:
+        if self.height_meter > 3000:
             self.score_data['health'] = self.player.health
         else:
             self.score_data['health'] = 0
