@@ -28,7 +28,7 @@ def gen_level(location):
                 plat_x.remove(7)
                 plat_x.remove(6)
                 remove_near = 2
-            elif name in ['ght','imp','mag']:
+            elif name in ['ght','brd','imp','mag']:
                 pos_y += TILE_SIZE
                 layer = True
             elif name in ['td1','th1','ts1']:

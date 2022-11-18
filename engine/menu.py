@@ -4,7 +4,7 @@ from engine.graphic.gameui import Button, TextInput
 from engine.graphic.spritesheet import sprite_at
 
 class Menu():
-    def __init__(self, scr_id=1, fps_id=2):
+    def __init__(self, scr_id=1, fps_id=1):
         self.scr_option = [(1440,960),(1200,800),(960,640),(720,480)] # 3:2
         self.scr_id = scr_id
 
@@ -13,7 +13,7 @@ class Menu():
         self.screen = pygame.display.set_mode(self.scr_size, 0, 32)
         self.scale = (1,1)
 
-        self.fps_option = [30, 45, 60]
+        self.fps_option = [30, 60, 90]
         self.fps_id = fps_id
         self.current_menu = [self.main_menu, self.game_loop, self.rank_menu, self.option_menu, self.score_menu]
         self.id = 0
@@ -60,6 +60,10 @@ class Menu():
         self.bg_main = pygame.transform.scale(pygame.image.load('sprite/bg-main.png').convert(), self.scr_option[self.scr_id])
         self.bg1 = pygame.transform.scale(pygame.image.load('sprite/bg1.png').convert(), self.scr_option[self.scr_id])
         self.bg2 = pygame.transform.scale(pygame.image.load('sprite/bg2.png').convert(), self.scr_option[self.scr_id])
+
+        self.title = pygame.image.load('sprite/title.png').convert_alpha()
+        self.title = pygame.transform.scale(self.title, (self.title.get_width()*sw,self.title.get_height()*sh))
+        self.title_rect = self.title.get_rect(center=(self.scr_size[0]//2, 200*sh))
 
         self.back_button = Button(self.scr_size[0] - 80*sw, 30*sh, 50*sw, 50*sh, (40,50,150), self.fontL, '->')
 
@@ -119,6 +123,13 @@ class Menu():
         self.pause_menu_tint.fill((77, 77, 92))
         self.pause_menu_tint.set_alpha(120)
 
+        self.fontN = pygame.font.Font('data/ARCADEPI.TTF', int(30*sh))
+        name_text = self.fontN.render('65010966 Walan Kitjarak', True, (255,255,255))
+        self.name_surf = pygame.Surface((name_text.get_width()+20*sw,name_text.get_height()+10*sh))
+        self.name_surf.fill((40,50,150))
+        self.name_surf.blit(name_text, self.name_surf.get_rect(center=(self.name_surf.get_width()//2+12*sw,self.name_surf.get_height()//2+6*sh)))
+        self.name_rect = self.name_surf.get_rect(topleft=(self.scr_size[0]-self.name_surf.get_width()-10*sw,self.scr_size[1]-self.name_surf.get_height()-10*sh))
+
     def get_fps(self):
         return self.fps_option[self.fps_id]
 
@@ -151,7 +162,9 @@ class Menu():
                     self.id = 3
             
         self.screen.blit(self.bg_main, (0,0))
+        self.screen.blit(self.title, self.title_rect)
         self.main_menu_button.draw(self.screen)
+        self.screen.blit(self.name_surf, self.name_rect)
 
     def game_loop(self, event_list, dt):
         if not self.pause:
@@ -187,6 +200,7 @@ class Menu():
         self.screen.blit(self.rank_board, self.rank_board_pos)
         self.screen.blit(self.rank_text, self.rank_board_pos)
         self.screen.blit(self.rank_title, self.rank_title_rect)
+        self.screen.blit(self.name_surf, self.name_rect)
 
     def option_menu(self, event_list, _):
         self.back_button.update(event_list)
@@ -214,6 +228,7 @@ class Menu():
         self.screen.blit(self.fps_title, self.fps_title_rect)
         self.back_button.draw(self.screen)
         self.option_menu_button.draw(self.screen)
+        self.screen.blit(self.name_surf, self.name_rect)
 
     def score_menu(self, event_list, dt):
         self.done_input.update(event_list)
@@ -228,12 +243,10 @@ class Menu():
 
             this_name = self.name_input.get_input()
             if not this_name:
-                anyms_c = 0
+                anyms_c = 1
                 for name in self.rank_data:
                     if name.startswith('anonymous') and anyms_c < 5:
                         anyms_c += 1
-                if anyms_c == 0:
-                    anyms_c += 1
                 this_name = f'anonymous{anyms_c}'
 
             if this_name in self.rank_data:

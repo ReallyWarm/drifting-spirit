@@ -40,13 +40,30 @@ class Ghost(Enemy):
 
         super().__init__(pos, self.ani['idle'].image, self.ani, self.state)
 
+class Bird(Enemy):
+    def __init__(self, name, pos):
+        # Animation and Image
+        self.name = name
+        self.ani = {'idle': Animate("sprite/bird-idle.png",(0,0,32,32), 7, pixel_jump=2, frames=6)}
+        self.state = 'idle'
+        self.attack_time = [100,140]
+        self.attack_angle = [90,270]
+
+        if pos[0] < 128:
+            for name in self.ani:
+                for i, image in enumerate(self.ani[name].sprites):
+                    self.ani[name].sprites[i] = pygame.transform.flip(image, True, False)
+
+        super().__init__(pos, self.ani['idle'].image, self.ani, self.state, self.attack_time, self.attack_angle)
+
+
 class Imp(Enemy):
     def __init__(self, name, pos):
         # Animation and Image
         self.name = name
         self.ani = {'idle': Animate("sprite/imp-idle.png",(0,0,32,32), 9, pixel_jump=2, frames=25)}
         self.state = 'idle'
-        self.attack_time = [0,180]
+        self.attack_time = [120,160]
         self.attack_angle = [60,120]
 
         if pos[0] < 128:
@@ -60,10 +77,10 @@ class Mage(Enemy):
     def __init__(self, name, pos):
         # Animation and Image
         self.name = name
-        self.ani = {'idle': Animate("sprite/mage-idle.png",(0,0,32,32), 8, pixel_jump=2, frames=25)}
+        self.ani = {'idle': Animate("sprite/mage-idle.png",(0,0,32,32), 8, pixel_jump=2, frames=10)}
         self.state = 'idle'
-        self.attack_time = [0,240]
-        self.attack_angle = [90,270]
+        self.attack_time = [160,200]
+        self.attack_angle = [90,35,145]
 
         if pos[0] < 128:
             for name in self.ani:
@@ -74,3 +91,5 @@ class Mage(Enemy):
 
     def set_attack_angle(self, angle):
         self.attack_angle = angle
+        self.attack_angle.append(angle[0]-55)
+        self.attack_angle.append(angle[0]+55)

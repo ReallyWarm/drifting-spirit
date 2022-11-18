@@ -3,7 +3,7 @@ from engine.graphic.spritesheet import sprite_at, load_sheet
 from engine.graphic.gameui import HealthUI, PowerUI
 from engine.graphic.particlelist import ParticleList
 from engine.platform import PlatformSet, Platform
-from engine.enemy import Ghost, Imp, Mage
+from engine.enemy import Ghost, Bird, Imp, Mage
 from engine.item import ItemDash, ItemHealth, ItemScore
 from engine.player import Player
 from engine.object import DangerZone, Portal
@@ -115,7 +115,7 @@ class Game():
         self.current_height = 0
         self.height_meter = 0
         self.score_data = { 'height':0,
-                            'enemy':{'ght':0,'imp':0,'mag':0},
+                            'enemy':{'ght':0,'brd':0,'imp':0,'mag':0},
                             'item':{'ts1':0,'th1':0},
                             'health':0,
                             'portal':0
@@ -145,6 +145,8 @@ class Game():
                     layer_data.append(Platform((data[2],self.canva.get_height()-data[3]),self.plat_data.data[data[0]]))
                 elif data[0] == 'ght':
                     layer_data.append(Ghost('ght',(data[2],self.canva.get_height()-data[3])))
+                elif data[0] == 'brd':
+                    layer_data.append(Bird('brd',(data[2],self.canva.get_height()-data[3])))
                 elif data[0] == 'imp':
                     layer_data.append(Imp('imp',(data[2],self.canva.get_height()-data[3])))
                 elif data[0] == 'mag':
@@ -194,7 +196,7 @@ class Game():
         for data in layer:
             if isinstance(data, Platform):
                 self.plat_sprites.add(data)
-            elif isinstance(data, (Ghost,Imp,Mage)):
+            elif isinstance(data, (Ghost,Bird,Imp,Mage)):
                 self.enemy_sprites.add(data)
             elif isinstance(data, (ItemDash,ItemHealth,ItemScore)):
                 self.item_sprites.add(data)
