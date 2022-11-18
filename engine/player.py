@@ -57,10 +57,17 @@ class Player(pygame.sprite.Sprite):
         self.damaged = False
         self.immunity = False
         self.immunity_time = [0,45]
+
+        self.iframe = False
+        self.iframe_time = [0,30]
         
         self.pos = Vector2(self.rect.topleft)
         self.vel = Vector2(0,0)
         self.acc = Vector2(0,0)
+
+    def start_iframe(self):
+        self.iframe = True
+        self.iframe_time[0] = 0
 
     def input(self, event_list):
         for event in event_list:
@@ -182,6 +189,11 @@ class Player(pygame.sprite.Sprite):
             self.immunity = False
             self.immunity_time[0] = 0
 
+        if self.iframe:
+            self.iframe_time[0] += 1
+            if self.iframe_time[0] > self.iframe_time[1] / dt:
+                self.iframe_time[0] = 0
+                self.iframe = False
 
     def move(self, collision_block, collision_platform, dt):
         # Max speed = acc / fric
@@ -223,6 +235,7 @@ class Player(pygame.sprite.Sprite):
                 self.dash_direct = 0
                 self.dash_time[0] = 0
                 self.vel /= 4
+                self.start_iframe()
 
         # Jump and Run
         else:

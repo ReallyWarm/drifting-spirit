@@ -75,7 +75,7 @@ class Game():
         self.dash_sound = pygame.mixer.Sound('sound/dash.wav')
         self.dash_sound.set_volume(0.2)
         self.enemy_sound = pygame.mixer.Sound('sound/enemy.wav')
-        self.enemy_sound.set_volume(0.5)
+        self.enemy_sound.set_volume(0.3)
         self.attack_sound = pygame.mixer.Sound('sound/attack.wav')
         self.attack_sound.set_volume(0.1)
         self.dead_sound = pygame.mixer.Sound('sound/dead.wav')
@@ -204,13 +204,9 @@ class Game():
                 self.portal = data
 
     def input(self, event_list):
-        pass
         # mx, my = pygame.mouse.get_pos()
-
-        # if self.cva_rect.collidepoint(mx, my):
-        #     if pygame.mouse.get_pressed()[0]:
-        #         for i in range(1):
-        #             self.particles.add(ptc_id, [(mx-self.cva_rect.x)*self.cva_scale[0]+self.offset[0], (my-self.cva_rect.y)*self.cva_scale[1]+self.offset[1]], self.dt)
+        # pos = [(mx-self.cva_rect.x)*self.cva_scale[0]+self.offset[0], (my-self.cva_rect.y)*self.cva_scale[1]+self.offset[1]]
+        pass
 
     def update(self, event_list, dt):
         self.scene[self.scene_id](event_list, dt)
@@ -221,7 +217,7 @@ class Game():
         self.scene_update(dt)
         self.scroll(self.dt)
 
-        self.bg_rect.y = self.bg_pos[1] + self.bg_rect.height * (self.current_height / 3000)
+        self.bg_rect.y = self.bg_pos[1] + self.bg_rect.height * (self.current_height / 9600)
 
         # Update enemies
         for enemy in self.enemy_sprites.sprites():
@@ -238,9 +234,10 @@ class Game():
                 if self.player.dashing:
                     rm_enemy = True
                 elif self.player.vel.y > 0 and (self.player.rect.bottom <= enemy.rect.centery or self.player.vel.y > enemy.rect.height // 2):
-                        self.player.vel.y = -5 * self.dt
+                        self.player.vel.y = -4.5 * self.dt
+                        self.player.start_iframe()
                         rm_enemy = True
-                elif not self.player.immunity:
+                elif not self.player.immunity and not self.player.iframe:
                     self.player.damaged = True
             # Remove enemy with particle and sound
             if rm_enemy:
@@ -264,7 +261,7 @@ class Game():
 
         
         if self.bullets.get_collide() == Player:
-            if not self.player.immunity and not self.player.dashing:
+            if not self.player.immunity and not self.player.dashing and not self.player.iframe:
                 self.player.damaged = True
 
         # collide items
@@ -325,7 +322,7 @@ class Game():
             self.damaged_sound.play()
         if self.player.immunity:
             self.particles.add('damaged', [random.randint(self.player.rect.left,self.player.rect.right), self.player.rect.bottom], self.dt)
-        if self.player.jumped and self.player.jump_time[0] == 1:
+        if self.player.jumped and self.player.jump_time[0] == 1 and not self.player.dashing:
             self.jump_sound.play()
             for _ in range(6):
                 self.particles.add('jump', [random.randint(self.player.rect.centerx-self.player.rect.w//4,self.player.rect.centerx+self.player.rect.w//4), self.player.rect.bottom], self.dt)
@@ -365,7 +362,11 @@ class Game():
         # update UI
         self.current_height = (self.canva.get_height() - self.player.rect.bottom) * 10 // 32
         if self.current_height > self.height_meter:
-            self.height_meter = self.current_height
+            if self.portal is not None:
+                if self.player.rect.bottom >= self.portal.rect.bottom:
+                    self.height_meter = self.current_height
+            else:
+                self.height_meter = self.current_height
 
         self.height_text = self.font.render(f'Height : {self.height_meter}', True, (255,255,255))
 

@@ -19,7 +19,7 @@ class Enemy(pygame.sprite.Sprite):
             self.attack_time[0] += 1
             if self.attack_time[0] >= self.attack_time[1] / dt:
                 for angle in self.attack_angle:
-                    bullets.add([self.rect.centerx,self.rect.centery], 8, 1.5, angle, time=200, color=(175,60,40), particle=True)
+                    bullets.add([self.rect.centerx-4,self.rect.centery+4], 8, 1.5, angle, time=200, color=(175,60,40), particle=True)
                 self.attack_time[0] = 0
                 self.attacked = True
 
@@ -47,7 +47,7 @@ class Bird(Enemy):
         self.ani = {'idle': Animate("sprite/bird-idle.png",(0,0,32,32), 7, pixel_jump=2, frames=6)}
         self.state = 'idle'
         self.attack_time = [100,140]
-        self.attack_angle = [90,270]
+        self.attack_angle = [90]
 
         if pos[0] < 128:
             for name in self.ani:

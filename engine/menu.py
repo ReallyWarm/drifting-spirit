@@ -311,13 +311,14 @@ class Menu():
         
         self.score['height'] = int(score_data['height'] * 0.7)
         self.score['enemy'] = dict()
-        self.score['enemy']['ght'] = score_data['enemy']['ght'] * 100
-        self.score['enemy']['imp'] = score_data['enemy']['imp'] * 300
-        self.score['enemy']['mag'] = score_data['enemy']['mag'] * 400
-        self.score['enemy']['all'] = self.score['enemy']['ght']+self.score['enemy']['imp']+self.score['enemy']['mag']
+        self.score['enemy']['ght'] = score_data['enemy']['ght'] * 50
+        self.score['enemy']['brd'] = score_data['enemy']['brd'] * 100
+        self.score['enemy']['imp'] = score_data['enemy']['imp'] * 150
+        self.score['enemy']['mag'] = score_data['enemy']['mag'] * 200
+        self.score['enemy']['all'] = self.score['enemy']['ght']+self.score['enemy']['brd']+self.score['enemy']['imp']+self.score['enemy']['mag']
         self.score['item'] = dict()
-        self.score['item']['ts1'] = score_data['item']['ts1'] * 200
-        self.score['item']['th1'] = score_data['item']['th1'] * 150
+        self.score['item']['ts1'] = score_data['item']['ts1'] * 250
+        self.score['item']['th1'] = score_data['item']['th1'] * 200
 
         self.score['health'] = score_data['health'] * 100
         self.score['portal'] = score_data['portal'] * 2000
