@@ -1,5 +1,3 @@
-# https://github.com/Rabbid76/PyGameExamplesAndAnswers/blob/master/documentation/pygame/pygame_ui_elements.md
-
 import pygame
 
 class Button(pygame.sprite.Sprite):
