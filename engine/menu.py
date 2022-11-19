@@ -42,8 +42,8 @@ class Menu():
         self.back_sound = pygame.mixer.Sound('sound/cancel.wav')
         self.score_sound = pygame.mixer.Sound('sound/score.wav')
 
-        pygame.mixer.music.load('sound/song1.mp3')
-        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.load('sound/song1.wav')
+        pygame.mixer.music.set_volume(0.2)
         pygame.mixer.music.play(-1)
 
         self.game = Game((256,320), self.scale)
@@ -140,8 +140,8 @@ class Menu():
             self.new_game = False
 
             pygame.mixer.music.unload()
-            pygame.mixer.music.load('sound/song2.mp3')
-            pygame.mixer.music.set_volume(0.8)
+            pygame.mixer.music.load('sound/song2.wav')
+            pygame.mixer.music.set_volume(0.3)
             pygame.mixer.music.play(-1)
 
         self.current_menu[self.id](event_list, dt)
@@ -302,8 +302,8 @@ class Menu():
         self.new_game = True
         self.score_sound.play()
         pygame.mixer.music.unload()
-        pygame.mixer.music.load('sound/song1.mp3')
-        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.load('sound/song1.wav')
+        pygame.mixer.music.set_volume(0.2)
         pygame.mixer.music.play(-1)
 
     def calculate_score(self):
