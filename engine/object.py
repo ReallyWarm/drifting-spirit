@@ -57,14 +57,15 @@ class Portal(pygame.sprite.Sprite):
         if not self.finished:
             w = surf_size[0] // 2
             h = surf_size[1] // 2
+            fh = (h*4)//3
             for _ in range(4):
                 side = random.randint(1,4)
                 if side == 1:
-                    pos = [self.rect.centerx-w, random.randint(self.rect.centery-h,self.rect.centery+h)]
+                    pos = [self.rect.centerx-w, random.randint(self.rect.centery-fh,self.rect.centery+h)]
                 elif side == 2:
-                    pos = [self.rect.centerx+w, random.randint(self.rect.centery-h,self.rect.centery+h)]
+                    pos = [self.rect.centerx+w, random.randint(self.rect.centery-fh,self.rect.centery+h)]
                 elif side == 3:
-                    pos = [random.randint(self.rect.centerx-w,self.rect.centerx+w), self.rect.centery-h]
+                    pos = [random.randint(self.rect.centerx-w,self.rect.centerx+w), self.rect.centery-fh]
                 elif side == 4:
                     pos = [random.randint(self.rect.centerx-w,self.rect.centerx+w), self.rect.centery+h]
                 angle = round(math.degrees(math.atan2(self.rect.centery-pos[1],self.rect.centerx-pos[0])))

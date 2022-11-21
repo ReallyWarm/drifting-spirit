@@ -159,6 +159,7 @@ class Game():
                     layer_data.append(ItemScore('ts1',(data[2],self.canva.get_height()-data[3])))
                 elif data[0] == 'prt':
                     layer_data.append(Portal((data[2],self.canva.get_height()-data[3])))
+                    self.move_bg = ((data[3]//48)-1)*15*2 + 300
             self.level.append(layer_data)
 
         # Create on screen level  
@@ -212,12 +213,13 @@ class Game():
         self.scene[self.scene_id](event_list, dt)
             
     def game_scene(self, event_list, dt):
+        self.player.power_amount = 6
         self.input(event_list)
         self.player.input(event_list)
         self.scene_update(dt)
         self.scroll(self.dt)
 
-        self.bg_rect.y = self.bg_pos[1] + self.bg_rect.height * (self.current_height / 9600)
+        self.bg_rect.y = self.bg_pos[1] + self.bg_rect.height * (self.current_height / self.move_bg)
 
         # Update enemies
         for enemy in self.enemy_sprites.sprites():
@@ -365,6 +367,8 @@ class Game():
             if self.portal is not None:
                 if self.player.rect.bottom >= self.portal.rect.bottom:
                     self.height_meter = self.current_height
+                elif self.player.rect.bottom <= self.portal.rect.bottom:
+                    self.height_meter = (self.canva.get_height() - self.portal.rect.bottom) * 10 // 32
             else:
                 self.height_meter = self.current_height
 
