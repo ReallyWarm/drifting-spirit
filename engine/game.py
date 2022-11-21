@@ -213,7 +213,6 @@ class Game():
         self.scene[self.scene_id](event_list, dt)
             
     def game_scene(self, event_list, dt):
-        self.player.power_amount = 6
         self.input(event_list)
         self.player.input(event_list)
         self.scene_update(dt)
